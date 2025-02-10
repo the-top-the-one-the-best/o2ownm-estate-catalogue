@@ -1,0 +1,11 @@
+dnspython
+pymongo
+flask
+flask-jwt-extended
+gunicorn
+flask-cors
+marshmallow
+pytz
+passlib
+pillow
+flask-apispec
