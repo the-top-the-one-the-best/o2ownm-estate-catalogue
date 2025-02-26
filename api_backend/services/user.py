@@ -7,9 +7,10 @@ import werkzeug.exceptions
 from bson import ObjectId
 from datetime import datetime
 from api_backend.dtos import CredentialDto
+from api_backend.services.log import LogService
 from config import Config
 from passlib.hash import pbkdf2_sha256
-from constants import AuthEventTypes
+from constants import EventTypes, EventTargetTypes
 from flask_jwt_extended import (
   create_access_token,
   create_refresh_token, 
@@ -23,8 +24,8 @@ class UserService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.users
-    self.auth_log_collection = self.db.authlogs
     self.blacklist_jti_collection = self.db.blacklistjtis
+    self.log_svc = LogService()
     return
   
   def get_me(self, uid: ObjectId):
@@ -42,6 +43,7 @@ class UserService():
       if credential_existed:
         raise werkzeug.exceptions.Conflict("email already registered")
     
+    target = self.collection.find_one({ "_id": uid })
     update_dto["updated_at"] = datetime.now(pytz.UTC)
     updated = self.collection.find_one_and_update(
       { "_id": uid },
@@ -51,37 +53,36 @@ class UserService():
     if not updated:
       raise werkzeug.exceptions.NotFound()
     
-    self.auth_log_collection.insert_one({
-      "user_id": uid,
-      "event_type": AuthEventTypes.CHANGE_PROFILE,
-      "event_details": update_dto,
-      "created_at": datetime.now(pytz.UTC),
-    })
+    self.log_svc.log_event(
+      uid,
+      EventTypes.UPDATE_DATA,
+      target_id=uid,
+      target_type=EventTargetTypes.PROFILE,
+      old_data={key: target.get("key") or None for key in update_dto},
+      new_data=update_dto,
+    )
+    
     return updated
   
   def login(self, credential_dto):
     error = CredentialDto().validate(credential_dto)
     if error:
       raise werkzeug.exceptions.BadRequest()
+    
     auth_target = self.collection.find_one({"email": credential_dto["email"]})
     if not auth_target:
+      self.log_svc.log_event(None, EventTypes.LOGIN_FAILED)
       raise werkzeug.exceptions.Forbidden("wrong credential")
+    
     auth_result = pbkdf2_sha256.verify(
       credential_dto["password"],
       auth_target["password"],
     )
     if not auth_result:
-      self.auth_log_collection.insert_one({
-        "user_id": auth_target["_id"],
-        "event_type": AuthEventTypes.LOGIN_FAILED,
-        "created_at": datetime.now(pytz.UTC),
-      })
+      self.log_svc.log_event(auth_target["_id"], EventTypes.LOGIN_FAILED)
       raise werkzeug.exceptions.Forbidden("wrong credential")
-    self.auth_log_collection.insert_one({
-      "user_id": auth_target["_id"],
-      "event_type": AuthEventTypes.LOGIN,
-      "created_at": datetime.now(pytz.UTC),
-    })
+    
+    self.log_svc.log_event(auth_target["_id"], EventTypes.LOGIN)
     return {
       "access_token": create_access_token(
         identity=str(auth_target["_id"]),
@@ -107,19 +108,13 @@ class UserService():
       "updated_at": datetime.now(pytz.UTC),
     }
     new_id = self.collection.insert_one(new_user).inserted_id
-    self.auth_log_collection.insert_one({
-      "user_id": new_id,
-      "event_type": AuthEventTypes.REGISTER,
-      "created_at": datetime.now(pytz.UTC),
-    })
+    self.log_svc.log_event(new_id, EventTypes.REGISTER)
     return { "_id": str(new_id) }
   
-  def logout(self, raw_jwt):
+  def logout(self, uid, raw_jwt):
     jti = raw_jwt.get("jti")
     expiration_timestamp = raw_jwt.get("exp")
     expiration_datetime = datetime.fromtimestamp(expiration_timestamp, tz=pytz.UTC) if expiration_timestamp else None
-    if expiration_datetime:
-      expiration_datetime = pytz.UTC.localize(expiration_datetime)
     _now = datetime.now(pytz.UTC)
     if not expiration_datetime or expiration_datetime > _now:
       self.blacklist_jti_collection.insert_one({
@@ -127,6 +122,7 @@ class UserService():
         "exp_datetime": expiration_datetime,
         "created_at": datetime.now(pytz.UTC),
       })
+    self.log_svc.log_event(uid, EventTypes.LOGOUT)
     self.blacklist_jti_collection.delete_many({"exp_datetime": {"$lt": _now}})
     return
 
@@ -141,11 +137,8 @@ class UserService():
         }
       }
     )
-    self.auth_log_collection.insert_one({
-      "user_id": uid,
-      "event_type": AuthEventTypes.CHANGE_PASSWORD,
-      "created_at": datetime.now(pytz.UTC),
-    })
     if not target:
       raise werkzeug.exceptions.NotFound()
+    
+    self.log_svc.log_event(uid, EventTypes.CHANGE_PASSWORD)
     return

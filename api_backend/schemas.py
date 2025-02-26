@@ -1,7 +1,7 @@
 import pytz
 from marshmallow import Schema, ValidationError, fields, validate, missing
 from bson import ObjectId
-from constants import AuthEventTypes
+from constants import AuthEventTypes, RealEstateRoomLayoutTypes
 
 # helper class for ObjectId conversion
 class ObjectIdHelper(fields.String):
@@ -36,9 +36,45 @@ class UserSchema(MongoDefaultDocumentSchema):
   created_at = fields.AwareDateTime(default_timezone=pytz.UTC)
   updated_at = fields.AwareDateTime(default_timezone=pytz.UTC)
 
-class AuthLogs(MongoDefaultDocumentSchema):
+class EventLogSchema(MongoDefaultDocumentSchema):
   user_id = fields.ObjectId()
   event_type = fields.Enum(AuthEventTypes, by_value=True)
-  event_details = fields.Dict()
+  event_time = fields.AwareDateTime(default_timezone=pytz.UTC)
+  target_id = fields.ObjectId()
+  changes = fields.Dict()
+
+class RealEstateTagSchema(MongoDefaultDocumentSchema):
+  name = fields.String(required=True)
+
+class CustomerTagSchema(MongoDefaultDocumentSchema):
+  name = fields.String(required=True)
+
+class RealEstateSchema(MongoDefaultDocumentSchema):
+  name = fields.String(required=True)
+  city_county = fields.String(required=True)
+  district = fields.String(required=True)
+  room_layouts = fields.List(
+    fields.Enum(RealEstateRoomLayoutTypes, by_value=True)
+  )
+  room_sizes = fields.List(fields.List(fields.Number()))
+  real_estate_tags = fields.List(fields.ObjectId())
   created_at = fields.AwareDateTime(default_timezone=pytz.UTC)
+  updated_at = fields.AwareDateTime(default_timezone=pytz.UTC)
+
+class CustomerInquirySchema(MongoDefaultDocumentSchema):
+  real_estate_id = fields.ObjectId()
+  name = fields.String(required=True)
+  title = fields.String(required=True)
+  phone = fields.String(required=True)
+  email = fields.Email(allow_none=True)
+  room_layout_preferences = fields.List(
+    fields.Enum(RealEstateRoomLayoutTypes, by_value=True)
+  )
+  room_size_preferencs = fields.List(fields.Number())
+  file_date = fields.AwareDateTime(default_timezone=pytz.UTC)
+  city_county = fields.String(required=True)
+  district = fields.String(required=True)
+  customer_tags = fields.List(fields.ObjectId())
+  created_at = fields.AwareDateTime(default_timezone=pytz.UTC)
+  updated_at = fields.AwareDateTime(default_timezone=pytz.UTC)
   
