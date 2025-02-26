@@ -1,7 +1,7 @@
 import pytz
 from marshmallow import Schema, ValidationError, fields, validate, missing
 from bson import ObjectId
-from constants import AuthEventTypes, RealEstateRoomLayoutTypes
+from constants import EventTargetTypes, EventTypes, RealEstateRoomLayoutTypes
 
 # helper class for ObjectId conversion
 class ObjectIdHelper(fields.String):
@@ -38,9 +38,10 @@ class UserSchema(MongoDefaultDocumentSchema):
 
 class EventLogSchema(MongoDefaultDocumentSchema):
   user_id = fields.ObjectId()
-  event_type = fields.Enum(AuthEventTypes, by_value=True)
+  event_type = fields.Enum(EventTypes, by_value=True)
   event_time = fields.AwareDateTime(default_timezone=pytz.UTC)
   target_id = fields.ObjectId()
+  target_types = fields.Enum(EventTargetTypes, by_value=True)
   changes = fields.Dict()
 
 class RealEstateTagSchema(MongoDefaultDocumentSchema):
