@@ -1,5 +1,7 @@
+import pytz
 from marshmallow import Schema, ValidationError, fields, validate, missing
 from bson import ObjectId
+from constants import AuthEventTypes
 
 # helper class for ObjectId conversion
 class ObjectIdHelper(fields.String):
@@ -31,9 +33,12 @@ class UserSchema(MongoDefaultDocumentSchema):
   description = fields.String()
   is_admin = fields.Boolean(default=False)
   is_active = fields.Boolean(default=False)
-  created_at = fields.DateTime()
-  updated_at = fields.DateTime()
+  created_at = fields.AwareDateTime(default_timezone=pytz.UTC)
+  updated_at = fields.AwareDateTime(default_timezone=pytz.UTC)
 
 class AuthLogs(MongoDefaultDocumentSchema):
-  event_type = fields.String()
+  user_id = fields.ObjectId()
+  event_type = fields.Enum(AuthEventTypes, by_value=True)
+  event_details = fields.Dict()
+  created_at = fields.AwareDateTime(default_timezone=pytz.UTC)
   

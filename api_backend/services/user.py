@@ -9,6 +9,7 @@ from datetime import datetime
 from api_backend.dtos import CredentialDto
 from config import Config
 from passlib.hash import pbkdf2_sha256
+from constants import AuthEventTypes
 from flask_jwt_extended import (
   create_access_token,
   create_refresh_token, 
@@ -22,6 +23,7 @@ class UserService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.users
+    self.auth_log_collection = self.db.authlogs
     self.blacklist_jti_collection = self.db.blacklistjtis
     return
   
@@ -48,6 +50,13 @@ class UserService():
     )
     if not updated:
       raise werkzeug.exceptions.NotFound()
+    
+    self.auth_log_collection.insert_one({
+      "user_id": uid,
+      "event_type": AuthEventTypes.CHANGE_PROFILE,
+      "event_details": update_dto,
+      "created_at": datetime.now(pytz.UTC),
+    })
     return updated
   
   def login(self, credential_dto):
@@ -62,7 +71,17 @@ class UserService():
       auth_target["password"],
     )
     if not auth_result:
+      self.auth_log_collection.insert_one({
+        "user_id": auth_target["_id"],
+        "event_type": AuthEventTypes.LOGIN_FAILED,
+        "created_at": datetime.now(pytz.UTC),
+      })
       raise werkzeug.exceptions.Forbidden("wrong credential")
+    self.auth_log_collection.insert_one({
+      "user_id": auth_target["_id"],
+      "event_type": AuthEventTypes.LOGIN,
+      "created_at": datetime.now(pytz.UTC),
+    })
     return {
       "access_token": create_access_token(
         identity=str(auth_target["_id"]),
@@ -88,12 +107,17 @@ class UserService():
       "updated_at": datetime.now(pytz.UTC),
     }
     new_id = self.collection.insert_one(new_user).inserted_id
+    self.auth_log_collection.insert_one({
+      "user_id": new_id,
+      "event_type": AuthEventTypes.REGISTER,
+      "created_at": datetime.now(pytz.UTC),
+    })
     return { "_id": str(new_id) }
   
   def logout(self, raw_jwt):
     jti = raw_jwt.get("jti")
     expiration_timestamp = raw_jwt.get("exp")
-    expiration_datetime = datetime.utcfromtimestamp(expiration_timestamp) if expiration_timestamp else None
+    expiration_datetime = datetime.fromtimestamp(expiration_timestamp, tz=pytz.UTC) if expiration_timestamp else None
     if expiration_datetime:
       expiration_datetime = pytz.UTC.localize(expiration_datetime)
     _now = datetime.now(pytz.UTC)
@@ -117,6 +141,11 @@ class UserService():
         }
       }
     )
+    self.auth_log_collection.insert_one({
+      "user_id": uid,
+      "event_type": AuthEventTypes.CHANGE_PASSWORD,
+      "created_at": datetime.now(pytz.UTC),
+    })
     if not target:
       raise werkzeug.exceptions.NotFound()
     return
