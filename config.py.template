@@ -1,0 +1,33 @@
+from datetime import timedelta
+class Config(object):
+  # ver
+  VERSION = '2025.03.14'
+  LANGUAGE_DICT_URL = "https://github.com/fxsjy/jieba/raw/refs/heads/master/extra_dict/dict.txt.big"
+
+  # base
+  APP_HOST = "0.0.0.0"
+  APP_PORT = 8989
+  APP_URL_PREFIX = "/alumni/api/"
+  APISPEC_SWAGGER_URL = APP_URL_PREFIX + "swagger.json"
+  APISPEC_SWAGGER_UI_URL = APP_URL_PREFIX + "swagger"
+  SERVER_HTTP_MODE = "http"
+  MONGO_MAIN_URI = ""
+  UTC_OFFSET = +8
+  JWT_SECRET_KEY = ""
+  JWT_IDENTITY_CLAIM = "user_id"
+  JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=30)
+  PAYMENT_DUE_PERIOD = timedelta(minutes=15)
+  STATIC_FOLDER = "static"
+  
+  JWT_SECURITY_SCHEMA = {
+    "type": "apiKey",
+    "in": "header",
+    "name": "Authorization",
+    "description": "API Key"
+  }
+  JWT_SECURITY_OPTION = {'Bearer': []}
+  FS_UPLOAD_ROOT = '/tmp/'
+  FS_UPLOAD_FOLDER_NAME = 'uploaded_resources'
+  FS_RETURN_UPLOAD_URL_PFX = 'host' + FS_UPLOAD_FOLDER_NAME
+
+  USE_CORS = True

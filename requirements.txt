@@ -1,3 +1,4 @@
+openpyxl
 dnspython
 pymongo
 flask
@@ -9,3 +10,4 @@ pytz
 passlib
 pillow
 flask-apispec
+jieba

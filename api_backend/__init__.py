@@ -49,30 +49,39 @@ def make_app(config, for_manage) -> Flask:
     })
     return token_in_blacklist is not None
 
-  flask_cors.CORS(app)
+  if config.USE_CORS:
+    flask_cors.CORS(app)
   # api
   from . import controllers
   
   url_prefix = app.config["APP_URL_PREFIX"]
   app.register_blueprint(controllers.root.blueprint, url_prefix=f"{url_prefix}")
   app.register_blueprint(controllers.user.blueprint, url_prefix=f"{url_prefix}user")
+  app.register_blueprint(controllers.latest_news.blueprint, url_prefix=f"{url_prefix}latest_news")
+  app.register_blueprint(controllers.alumni_info.blueprint, url_prefix=f"{url_prefix}alumni_member_info")
+  app.register_blueprint(controllers.file_ops.blueprint, url_prefix=f"{url_prefix}files")
   
   # for swagger
   docs = FlaskApiSpec(app)
+  bp_apispec = app.blueprints.pop("flask-apispec", None)
+  bp_apispec.static_url_path = url_prefix + bp_apispec.static_url_path[1:]
+  app.register_blueprint(bp_apispec)
+  for rule_key, rule in app.url_map._rules_by_endpoint.items():
+    if 'flask-apispec.' in rule_key:
+      rule.reverse()
+      rule.pop()
   
   # Iterate over the rules of the application's url_map
-  for rule in app.url_map.iter_rules():
+  for rule_key in app.url_map.iter_rules():
     # Check if the rule belongs to the blueprint
     try:
-      view_func = app.view_functions[rule.endpoint]
-      docs.register(view_func, rule.endpoint)
+      view_func = app.view_functions[rule_key.endpoint]
+      docs.register(view_func, rule_key.endpoint)
     except TypeError:
       pass
     
-  api_key_scheme = config.JWT_SECURITY_SCHEMA
+  api_key_scheme = app.config["JWT_SECURITY_SCHEMA"]
   docs.spec.components.security_scheme("Bearer", api_key_scheme)
-  # docs.spec.options["security"] = [{"Bearer": []}]
-
   
   # https://github.com/jmcarp/flask-apispec/issues/111#issuecomment-508345581
   for key, value in docs.spec._paths.items():
