@@ -89,7 +89,7 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   finished_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
 
-class AlumniInfoSchema(MongoDefaultDocumentSchema):
+class CustomerInfoSchema(MongoDefaultDocumentSchema):
   # 中文姓名	身分證字號	性別	生日	
   civ_id = fields.String(missing='')
   name_zh = fields.String(missing='')

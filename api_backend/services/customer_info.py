@@ -1,14 +1,14 @@
 import pymongo
 from config import Config
 
-class AlumniInfoService():
+class CustomerInfoService():
   def __init__(
     self,
     mongo_client=pymongo.MongoClient(Config.MONGO_MAIN_URI),
   ):
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
-    self.collection = self.db.alumniinfos
+    self.collection = self.db.customerinfos
     
     # ensures text index is created only once.
     self.text_index_fields = (
@@ -17,7 +17,7 @@ class AlumniInfoService():
     )
     return
 
-  def _find_alumni_infos(self, query_dto, find_one=False):
+  def _find_customer_infos(self, query_dto, find_one=False):
     match_filter = {}
     if query_dto.get('civ_id'):
       match_filter['civ_id'] = str(query_dto['civ_id']).upper()
@@ -50,7 +50,7 @@ class AlumniInfoService():
 
   def query_by_filter(self, query_dto):
     results = {
-      "results": self._find_alumni_infos(query_dto),
+      "results": self._find_customer_infos(query_dto),
       "page_size": query_dto.get("page_size"),
       "page_number": query_dto.get("page_number"),
     }

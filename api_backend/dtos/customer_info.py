@@ -1,9 +1,9 @@
 from marshmallow import fields, Schema
 from api_backend.dtos.generic import create_page_result_dto
-from api_backend.schemas import AlumniInfoSchema
+from api_backend.schemas import CustomerInfoSchema
 from marshmallow.validate import Range
 
-class QueryAlumniInfoDto(Schema):
+class QueryCustomerInfoDto(Schema):
   # match fields
   name_zh = fields.String(missing=None, allow_none=True)
   civ_id = fields.String(missing=None, allow_none=True)
@@ -18,4 +18,4 @@ class QueryAlumniInfoDto(Schema):
   page_size = fields.Integer(missing=20, validate=[Range(min=1, max=100, error="Value must be in [1, 100]")])
   page_number = fields.Integer(missing=1, validate=[Range(min=1, error="Value must >= 1")])
 
-PagedAlumniInfoDto = create_page_result_dto(AlumniInfoSchema)
+PagedCustomerInfoDto = create_page_result_dto(CustomerInfoSchema)

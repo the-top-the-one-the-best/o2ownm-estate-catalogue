@@ -1,5 +1,5 @@
 from . import (
-  alumni_info,
+  customer_info,
   file_ops,
   latest_news,
   root,

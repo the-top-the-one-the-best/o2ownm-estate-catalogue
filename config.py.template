@@ -7,7 +7,7 @@ class Config(object):
   # base
   APP_HOST = "0.0.0.0"
   APP_PORT = 8989
-  APP_URL_PREFIX = "/alumni/api/"
+  APP_URL_PREFIX = "/crm/api/"
   APISPEC_SWAGGER_URL = APP_URL_PREFIX + "swagger.json"
   APISPEC_SWAGGER_UI_URL = APP_URL_PREFIX + "swagger"
   SERVER_HTTP_MODE = "http"

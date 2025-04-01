@@ -73,7 +73,7 @@ def process_member_xlsx(file_path, mongo_client=None):
     mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)    
 
   db = mongo_client.get_database()
-  member_col = db.alumniinfos
+  member_col = db.customerinfos
 
   wb = openpyxl.load_workbook(file_path)
   ws = wb.active

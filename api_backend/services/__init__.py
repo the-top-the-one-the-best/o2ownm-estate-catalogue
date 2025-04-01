@@ -1,6 +1,6 @@
 from . import (
+  customer_info,
   user,
   latest_news,
-  alumni_info,
   file_ops,
 )
