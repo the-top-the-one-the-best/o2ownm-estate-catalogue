@@ -1,8 +1,13 @@
 from datetime import timedelta
 class Config(object):
   # ver
-  VERSION = '2025.03.14'
+  APISPEC_TITLE = "O2O Whynot Estate CRM API" 
+
+  # jieba
   LANGUAGE_DICT_URL = "https://github.com/fxsjy/jieba/raw/refs/heads/master/extra_dict/dict.txt.big"
+
+  # tz info
+  UTC_OFFSET = +8
 
   # base
   APP_HOST = "0.0.0.0"
@@ -11,14 +16,13 @@ class Config(object):
   APISPEC_SWAGGER_URL = APP_URL_PREFIX + "swagger.json"
   APISPEC_SWAGGER_UI_URL = APP_URL_PREFIX + "swagger"
   SERVER_HTTP_MODE = "http"
-  MONGO_MAIN_URI = ""
-  UTC_OFFSET = +8
+  MONGO_MAIN_URI = "mongodb://127.0.0.1/o2own-realestate-catalogue-crm"
+  
+  # jwt security schema
   JWT_SECRET_KEY = ""
   JWT_IDENTITY_CLAIM = "user_id"
-  JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=30)
-  PAYMENT_DUE_PERIOD = timedelta(minutes=15)
+  JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
   STATIC_FOLDER = "static"
-  
   JWT_SECURITY_SCHEMA = {
     "type": "apiKey",
     "in": "header",
@@ -26,8 +30,22 @@ class Config(object):
     "description": "API Key"
   }
   JWT_SECURITY_OPTION = {'Bearer': []}
-  FS_UPLOAD_ROOT = '/tmp/'
-  FS_UPLOAD_FOLDER_NAME = 'uploaded_resources'
-  FS_RETURN_UPLOAD_URL_PFX = 'host' + FS_UPLOAD_FOLDER_NAME
 
-  USE_CORS = True
+  # cors
+  USE_CORS = False
+
+  # file upload
+  FS_UPLOAD_ROOT = '/tmp/'
+  FS_UPLOAD_FOLDER_NAME = 'dashboard_images'
+  FS_RETURN_UPLOAD_URL_PFX = 'http://example.com/' + FS_UPLOAD_FOLDER_NAME
+
+  # password reset
+  CHANGE_PWD_VALID_PERIOD = timedelta(minutes=10)
+  CREATE_ACCOUNT_VALID_PERIOD = timedelta(days=3)
+  MAX_EMAIL_REQUEST_PER_DAY = 3
+  CHANGE_PWD_FRONTEND_URL = "https://example.com/crm/reset-password"
+
+  SYSTEM_SMTP_SERVER = "smtp.gmail.com"
+  SYSTEM_SMTP_PORT = 587
+  SYSTEM_EMAIL_USER = "test@gmail.com"
+  SYSTEM_EMAIL_APP_PASSWORD = "---------------------".replace(' ', '')
