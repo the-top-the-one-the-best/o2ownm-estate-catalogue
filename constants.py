@@ -15,14 +15,16 @@ ALLOWED_IMAGE_MIME_TYPES = {
   "image/webp": "webp",
 }
 
-class DescriptionContentTypes(str, enum.Enum):
+class DescriptionContentTypes:
   images = "images"
   text = "text"
   video = "video"
 
-class AuthEventTypes(str, enum.Enum):
+class AuthEventTypes:
   register = "register"
   verified = "verified"
+  request_reset_password = "request_reset_password"
+  admin_create_user = "admin_create_user"
   change_password = "change_password"
   change_profile = "change_profile"
   login = "login"
@@ -30,13 +32,28 @@ class AuthEventTypes(str, enum.Enum):
   logout = "logout"
   login_failed = "login_failed"
 
-class TaskStates(str, enum.Enum):
+class TaskStates:
   pending = "pending"
   running = "running"
   failed = "failed"
   success = "success"
 
-class TaskTypes(str, enum.Enum):
+class AccessTarget:
+  account = 'account'
+  homepage = 'homepage'
+  estate_customer_info = 'estate_customer_info'
+  estate_customer_tag = 'estate_customer_tag'
+  user_role_mgmt = 'user_role_mgmt'
+  user_mgmt = 'user_mgmt'
+  system_log = 'system_log'
+
+class Permission:
+  read = "r"
+  write = "w"
+  full = "rw"
+  none = ""
+
+class TaskTypes:
   import_member_xlsx = "import_member_xlsx"
 
 def enum_set(c):

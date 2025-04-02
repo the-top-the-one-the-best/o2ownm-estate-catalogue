@@ -1,7 +1,14 @@
 import pytz
-from marshmallow import Schema, ValidationError, fields, post_load, validate, missing
+from marshmallow import Schema, ValidationError, fields, validate, missing
 from bson import ObjectId
-from constants import AuthEventTypes, DescriptionContentTypes, TaskStates, TaskTypes, enum_set
+from constants import (
+  AuthEventTypes,
+  DescriptionContentTypes,
+  TaskStates,
+  TaskTypes,
+  Permission,
+  enum_set,
+)
 
 # helper class for ObjectId conversion
 class ObjectIdHelper(fields.String):
@@ -33,19 +40,41 @@ fields.DefaultUTCDateTime = DefaultUTCDateTime
 
 class HeartBeatSchema(Schema):
   ts_utc = fields.DefaultUTCDateTime()
+  uptime = fields.DefaultUTCDateTime()
+  version = fields.String()
+
 
 # base schema for all mongo documents using objectId
 class MongoDefaultDocumentSchema(Schema):
   _id = fields.ObjectId()
 
+class UserPermissionSchema(Schema):
+  account = fields.String(default=Permission.full, missing=Permission.full, validate=validate.OneOf(enum_set(Permission)))
+  homepage = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
+  estate_customer_info = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
+  estate_customer_tag = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
+  user_role_mgmt = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
+  user_mgmt = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
+  system_log = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
+
+class PasswordRequestRequestSchema(MongoDefaultDocumentSchema):
+  user_id = fields.ObjectId()
+  email = fields.Email()
+  salt = fields.String()
+  created_at = fields.DefaultUTCDateTime()
+  expired_at = fields.DefaultUTCDateTime()
+  validate_user = fields.Boolean(missing=False, default=False)
+  fulfilled = fields.Boolean(missing=False, default=False)
+
 class UserSchema(MongoDefaultDocumentSchema):
-  email = fields.Email(allow_none=True)
+  email = fields.Email(allow_none=False, required=True)
   phone = fields.String(validate=validate.Regexp("^09\d{8}$"))
   password = fields.String()
   name = fields.String()
   description = fields.String()
-  is_admin = fields.Boolean(default=False)
-  is_active = fields.Boolean(default=False)
+  permissions = fields.Nested(UserPermissionSchema)
+  is_admin = fields.Boolean(missing=False)
+  is_valid = fields.Boolean(missing=False)
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
 

@@ -7,10 +7,10 @@ name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
 customer_info_service = CustomerInfoService()
 
-@blueprint.route("/admin/query", methods=["GET"])
+@blueprint.route("/query", methods=["GET"])
 @doc(
-  summary='admin query customer info by dto',
-  tags=['客戶資料', 'admin'],
+  summary='query customer info by dto',
+  tags=['客戶資料'],
 )
 @use_kwargs(QueryCustomerInfoDto, location="query")
 @marshal_with(PagedCustomerInfoDto)

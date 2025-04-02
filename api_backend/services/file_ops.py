@@ -56,8 +56,8 @@ class FileOpsService():
     task_id = bson.ObjectId()
     task_entry.update(
       _id = task_id,
-      task_type = constants.TaskTypes.import_member_xlsx.value,
-      state = constants.TaskStates.pending.value,
+      task_type = constants.TaskTypes.import_member_xlsx,
+      state = constants.TaskStates.pending,
       creator_id = uid,
       trial = 0,
       params = {

@@ -57,7 +57,6 @@ def make_app(config, for_manage) -> Flask:
   url_prefix = app.config["APP_URL_PREFIX"]
   app.register_blueprint(controllers.root.blueprint, url_prefix=f"{url_prefix}")
   app.register_blueprint(controllers.user.blueprint, url_prefix=f"{url_prefix}user")
-  app.register_blueprint(controllers.latest_news.blueprint, url_prefix=f"{url_prefix}latest_news")
   app.register_blueprint(controllers.customer_info.blueprint, url_prefix=f"{url_prefix}customer_info")
   app.register_blueprint(controllers.file_ops.blueprint, url_prefix=f"{url_prefix}files")
   

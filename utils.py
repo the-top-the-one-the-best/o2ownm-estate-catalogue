@@ -1,20 +1,30 @@
-from datetime import datetime
-from bson import ObjectId
 import re
 import hashlib
+import base64
+import random
 import werkzeug.exceptions
+from datetime import datetime
+from functools import wraps
+from bson import ObjectId
+from flask_jwt_extended import get_jwt, jwt_required
+from api_backend.schemas import UserPermissionSchema
+
+def generate_salt_string(random_length=24):
+  return base64.b64encode(''.join(
+    chr(int(random.random() * 128)) for _ in range(random_length)
+  ).encode()).decode()
 
 # validate object id, options: raise or return false
-def validate_object_id(_id_in, raise_exception=True):
-  if type(_id_in) is ObjectId:
-    return _id_in
-  pattern = r"^[0-9a-fA-F]{24}$"
-  _id_in = str(_id_in)
-  if _id_in and re.match(pattern, _id_in):
-    return ObjectId(_id_in)
+def validate_object_id(_id, raise_exception=True):
+  if type(_id) is ObjectId:
+    return _id
+  pattern = r"^[0-9a-f]{24}$"
+  _id = str(_id).lower()
+  if _id and re.match(pattern, _id):
+    return ObjectId(_id)
   else:
     if raise_exception:
-      raise werkzeug.exceptions.BadRequest("%s is not a valid ObjectId" % str(_id_in))
+      raise werkzeug.exceptions.BadRequest("%s is not a valid ObjectId" % str(_id))
     return False
 
 def get_mongo_period(start: datetime, end: datetime):
@@ -50,6 +60,7 @@ def lookup_collection(
     })
   return
 
+# used for image file removal while document is updated
 def find_resource_recursively(json_object, field_name: str, recur_set=None):
   if recur_set is None:
     recur_set = set()
@@ -74,6 +85,52 @@ def find_resources_to_remove(old, new, field_name='src'):
 def get_file_sha1(file_path):
   hash_sha1 = hashlib.sha1()
   with open(file_path, "rb") as f:
-    for chunk in iter(lambda: f.read(4096), b""):  # Read in 4KB chunks
+    for chunk in iter(lambda: f.read(4096), b""):
       hash_sha1.update(chunk)
   return hash_sha1.hexdigest()
+
+# permission decorator to check if user has the required permission
+def valid_users_only():
+  def decorator(func):
+    @wraps(func)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+      claims = get_jwt()
+      is_valid = bool(claims.get("is_valid"))
+      if is_valid:
+        return func(*args, **kwargs)
+      raise werkzeug.exceptions.Forbidden("please validate your account")
+    return wrapper
+  return decorator
+
+def admins_only():
+  def decorator(func):
+    @wraps(func)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+      claims = get_jwt()
+      is_valid = bool(claims.get("is_admin"))
+      if is_valid:
+        return func(*args, **kwargs)
+      raise werkzeug.exceptions.Forbidden("admin role required")
+    return wrapper
+  return decorator
+
+def check_permission(access_target, request_permission):
+  def decorator(func):
+    @wraps(func)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+      claims = get_jwt()
+      user_permissions = claims.get("permissions", UserPermissionSchema().load({}))
+      # check if the user has the required permission
+      access_target_permission = user_permissions.get(access_target, "") or ""
+      if request_permission in access_target_permission:
+        return func(*args, **kwargs)
+      raise werkzeug.exceptions.Forbidden(
+        "endpoint requires permission [%s] on %s, but you only have [%s]." % (
+          request_permission, access_target, access_target_permission,
+        )
+      )
+    return wrapper
+  return decorator
