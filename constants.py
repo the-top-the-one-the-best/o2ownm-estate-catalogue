@@ -27,6 +27,7 @@ class AuthEventTypes:
   admin_create_user = "admin_create_user"
   change_password = "change_password"
   change_profile = "change_profile"
+  change_permission = "change_permission"
   login = "login"
   token_expired = "token_expired"
   logout = "logout"

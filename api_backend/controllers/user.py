@@ -12,8 +12,10 @@ from api_backend.dtos.user import (
   ResetPasswordDto,
   UpdatePasswordDto,
   UpdateUserDto,
+  UpdateUserPermissionDto,
 )
-from utils import admins_only, validate_object_id
+from constants import AccessTarget, Permission
+from utils import admins_only, check_permission, validate_object_id
 from flask_jwt_extended import decode_token, get_jwt, jwt_required, get_jwt_identity
 from api_backend.services.user import UserService
 from config import Config
@@ -61,7 +63,7 @@ def logout():
   user_service.logout(raw_jwt)
   return '', 204
 
-@blueprint.route("/profile", methods=["GET"])
+@blueprint.route("/profile/mine", methods=["GET"])
 @jwt_required()
 @doc(
   summary='get who I am',
@@ -75,7 +77,7 @@ def whoami():
     PublicUserDto().dump(user_service.get_profile_by_uid(validate_object_id(uid)))
   )
 
-@blueprint.route("/profile", methods=["PATCH"])
+@blueprint.route("/profile/mine", methods=["PATCH"])
 @jwt_required()
 @doc(
   summary='update profile',
@@ -84,17 +86,70 @@ def whoami():
 )
 @use_kwargs(UpdateUserDto)
 @marshal_with(PublicUserDto)
-def update_profile(**kwargs):
+def update_my_profile(**kwargs):
   uid = get_jwt_identity()
   update_dto = kwargs
   return flask.jsonify(
-    PublicUserDto().dump(user_service.update_profile(validate_object_id(uid), update_dto))
+    PublicUserDto().dump(user_service.update_profile_by_uid(validate_object_id(uid), update_dto))
+  )
+
+@blueprint.route("/profile/_id/<user_id>", methods=["GET"])
+@check_permission(AccessTarget.user_mgmt, Permission.read)
+@doc(
+  summary='get user by user_id, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.read),
+  tags=['帳戶', 'ADMIN'],
+  security=[Config.JWT_SECURITY_OPTION]
+)
+@marshal_with(PublicUserDto)
+def get_user_by_id(user_id):
+  return flask.jsonify(
+    PublicUserDto().dump(user_service.get_profile_by_uid(validate_object_id(user_id)))
+  )
+
+@blueprint.route("/profile/_id/<user_id>", methods=["PATCH"])
+@check_permission(AccessTarget.user_mgmt, Permission.write)
+@doc(
+  summary='update user by user_id, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.write),
+  tags=['帳戶', 'ADMIN'],
+  security=[Config.JWT_SECURITY_OPTION]
+)
+@use_kwargs(UpdateUserDto)
+@marshal_with(PublicUserDto)
+def update_user_by_id(user_id, **kwargs):
+  return flask.jsonify(
+    PublicUserDto().dump(
+      user_service.update_profile_by_uid(
+        validate_object_id(user_id),
+        kwargs,
+        run_uid=validate_object_id(get_jwt_identity()),
+      )
+    )
+  )
+
+@blueprint.route("/role/_id/<user_id>", methods=["PATCH"])
+@check_permission(AccessTarget.user_mgmt, Permission.write)
+@doc(
+  summary='update user roles by user_id, required permission <%s:%s>' % (AccessTarget.user_role_mgmt, Permission.full),
+  tags=['帳戶', 'ADMIN'],
+  security=[Config.JWT_SECURITY_OPTION]
+)
+@use_kwargs(UpdateUserPermissionDto)
+@marshal_with(PublicUserDto)
+def update_user_roles_by_id(user_id, **kwargs):
+  return flask.jsonify(
+    PublicUserDto().dump(
+      user_service.update_permissions_by_uid(
+        validate_object_id(user_id),
+        kwargs,
+        run_uid=validate_object_id(get_jwt_identity()),
+      )
+    )
   )
 
 @blueprint.route("/password", methods=["PATCH"])
 @jwt_required()
 @doc(
-  sumamry='change password',
+  summary='change password',
   tags=['帳戶'],
   security=[Config.JWT_SECURITY_OPTION]
 )
@@ -107,7 +162,7 @@ def update_password(**kwargs):
 
 @blueprint.route("/reset_password_request", methods=["POST"])
 @doc(
-  sumamry='request to reset password',
+  summary='request to reset password',
   tags=['帳戶'],
 )
 @use_kwargs(RequestResetPasswordDto)
@@ -118,7 +173,7 @@ def request_password_reset(**kwargs):
 
 @blueprint.route("/reset_password/event_id/<event_id>", methods=["POST"])
 @doc(
-  sumamry='reset password with passphrase',
+  summary='reset password with passphrase',
   tags=['帳戶'],
 )
 @use_kwargs(ResetPasswordDto)
@@ -175,7 +230,6 @@ def refresh_access_token_in_body(**kwargs):
   tags=['ADMIN'],
   security=[Config.JWT_SECURITY_OPTION],
 )
-@jwt_required()
 @admins_only()
 @use_kwargs(CreateUserDto)
 @marshal_with(PublicUserDto)

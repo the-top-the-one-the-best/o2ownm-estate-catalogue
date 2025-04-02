@@ -90,27 +90,12 @@ def get_file_sha1(file_path):
   return hash_sha1.hexdigest()
 
 # permission decorator to check if user has the required permission
-def valid_users_only():
-  def decorator(func):
-    @wraps(func)
-    @jwt_required()
-    def wrapper(*args, **kwargs):
-      claims = get_jwt()
-      is_valid = bool(claims.get("is_valid"))
-      if is_valid:
-        return func(*args, **kwargs)
-      raise werkzeug.exceptions.Forbidden("please validate your account")
-    return wrapper
-  return decorator
-
 def admins_only():
   def decorator(func):
     @wraps(func)
     @jwt_required()
     def wrapper(*args, **kwargs):
-      claims = get_jwt()
-      is_valid = bool(claims.get("is_admin"))
-      if is_valid:
+      if get_jwt().get("is_admin"):
         return func(*args, **kwargs)
       raise werkzeug.exceptions.Forbidden("admin role required")
     return wrapper
@@ -123,12 +108,20 @@ def check_permission(access_target, request_permission):
     def wrapper(*args, **kwargs):
       claims = get_jwt()
       user_permissions = claims.get("permissions", UserPermissionSchema().load({}))
+
       # check if the user has the required permission
       access_target_permission = user_permissions.get(access_target, "") or ""
-      if request_permission in access_target_permission:
+      if claims.get("is_valid") and (
+        claims.get("is_admin") or 
+        request_permission in access_target_permission
+      ):
         return func(*args, **kwargs)
+      
+      if not claims.get("is_valid"):
+        raise werkzeug.exceptions.Forbidden("invalid user")
+
       raise werkzeug.exceptions.Forbidden(
-        "endpoint requires permission [%s] on %s, but you only have [%s]." % (
+        "permission <%s:%s> required, but you only have `%s`." % (
           request_permission, access_target, access_target_permission,
         )
       )

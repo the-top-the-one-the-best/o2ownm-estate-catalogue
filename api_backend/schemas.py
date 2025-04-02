@@ -80,6 +80,7 @@ class UserSchema(MongoDefaultDocumentSchema):
 
 class AuthLogSchema(MongoDefaultDocumentSchema):
   user_id = fields.ObjectId()
+  target_id = fields.ObjectId()
   event_type = fields.String(validate=validate.OneOf(enum_set(AuthEventTypes)))
   event_details = fields.Dict()
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)

@@ -16,13 +16,15 @@ class Config(object):
   APISPEC_SWAGGER_URL = APP_URL_PREFIX + "swagger.json"
   APISPEC_SWAGGER_UI_URL = APP_URL_PREFIX + "swagger"
   SERVER_HTTP_MODE = "http"
+  STATIC_FOLDER = "static"
+
+  # db
   MONGO_MAIN_URI = "mongodb://127.0.0.1/o2own-realestate-catalogue-crm"
-  
+
   # jwt security schema
   JWT_SECRET_KEY = ""
   JWT_IDENTITY_CLAIM = "user_id"
   JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
-  STATIC_FOLDER = "static"
   JWT_SECURITY_SCHEMA = {
     "type": "apiKey",
     "in": "header",
