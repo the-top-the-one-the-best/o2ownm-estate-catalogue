@@ -2,11 +2,10 @@ import smtplib
 import sys
 import traceback
 import urllib.parse
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from bson import ObjectId
-from flask import render_template
 from config import Config
+from email.message import EmailMessage
+from flask import render_template
 
 class EmailService:
   def __init__(
@@ -30,11 +29,11 @@ class EmailService:
       content_type="plain",
       raise_error=False,
     ):
-    msg = MIMEMultipart()
+    msg = EmailMessage()
+    msg.set_content(content, subtype=content_type, charset="utf-8")
     msg["From"] = self.sender
     msg["To"] = recipient
     msg["Subject"] = subject
-    msg.attach(MIMEText(content, content_type))
     try:
       server = smtplib.SMTP(self.smtp_server, self.smtp_port)
       server.starttls()
@@ -45,7 +44,6 @@ class EmailService:
       print(traceback.format_exc(e), file=sys.stderr)
       if raise_error:
         raise e
-
     return
   
   def generate_password_reset_mail_html(
