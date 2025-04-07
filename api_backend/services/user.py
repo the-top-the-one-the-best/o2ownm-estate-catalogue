@@ -296,6 +296,11 @@ class UserService():
         "only %d reset requests per day" % Config.MAX_EMAIL_REQUEST_PER_DAY
       )
     
+    self.auth_log_collection.insert_one({
+      "user_id": auth_target["_id"],
+      "event_type": AuthEventTypes.request_reset_password,
+      "created_at": _now,
+    })
     new_salt = generate_salt_string()
     new_reset_request = {}
     new_reset_request.update(
