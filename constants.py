@@ -21,23 +21,16 @@ class DescriptionContentTypes:
   video = "video"
 
 class AuthEventTypes:
-  register = "register"
-  validate_email = "validate_email"
-  request_reset_password = "request_reset_password"
   admin_create_user = "admin_create_user"
   change_password = "change_password"
-  change_profile = "change_profile"
   change_permission = "change_permission"
+  change_profile = "change_profile"
   login = "login"
-  token_expired = "token_expired"
-  logout = "logout"
   login_failed = "login_failed"
-
-class TaskStates:
-  pending = "pending"
-  running = "running"
-  failed = "failed"
-  success = "success"
+  logout = "logout"
+  register = "register"
+  request_reset_password = "request_reset_password"
+  validate_email = "validate_email"
 
 class AccessTarget:
   account = 'account'
@@ -55,7 +48,14 @@ class Permission:
   none = ""
 
 class TaskTypes:
-  import_member_xlsx = "import_member_xlsx"
+  import_customer_xlsx = "import_customer_xlsx"
+  export_customer_xlsx = "export_customer_xlsx"
+
+class TaskStates:
+  pending = "pending"
+  running = "running"
+  failed = "failed"
+  success = "success"
 
 def enum_set(c):
   return set(

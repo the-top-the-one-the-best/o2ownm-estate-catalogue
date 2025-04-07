@@ -27,7 +27,7 @@ def process_task(task_id, max_retrial=5):
       }
     )
     try:
-      if task['task_type'] == TaskTypes.import_member_xlsx:
+      if task['task_type'] == TaskTypes.import_customer_xlsx:
         params = task['params']
         file_path = params['fs_path']
         result = process_member_xlsx(file_path, mongo_client=mongo_client)
