@@ -93,6 +93,19 @@ def update_my_profile(**kwargs):
     PublicUserDto().dump(user_service.update_profile_by_uid(validate_object_id(uid), update_dto))
   )
 
+@blueprint.route("/profile/query", methods=["GET"])
+@check_permission(AccessTarget.user_mgmt, Permission.read)
+@doc(
+  summary='query users, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.read),
+  tags=['帳戶', 'ADMIN'],
+  security=[Config.JWT_SECURITY_OPTION]
+)
+@marshal_with(PublicUserDto)
+def get_users():
+  return flask.jsonify(
+    PublicUserDto(many=True).dump(user_service.get_profiles())
+  )
+
 @blueprint.route("/profile/_id/<user_id>", methods=["GET"])
 @check_permission(AccessTarget.user_mgmt, Permission.read)
 @doc(

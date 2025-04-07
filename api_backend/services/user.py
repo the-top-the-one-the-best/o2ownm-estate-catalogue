@@ -32,6 +32,10 @@ class UserService():
     self.mail_svc = EmailService()
   
   # controller functions
+  def get_profiles(self):
+    targets = self.collection.find({})
+    return list(targets)
+
   def get_profile_by_uid(self, target_uid: ObjectId):
     target = self.collection.find_one({ "_id": target_uid })
     if not target:
