@@ -22,7 +22,7 @@ class DescriptionContentTypes:
 
 class AuthEventTypes:
   register = "register"
-  verified = "verified"
+  validate_email = "validate_email"
   request_reset_password = "request_reset_password"
   admin_create_user = "admin_create_user"
   change_password = "change_password"

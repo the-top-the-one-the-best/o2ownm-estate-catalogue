@@ -70,7 +70,7 @@ class UserService():
     if not target_user:
       raise werkzeug.exceptions.NotFound()
     target_user.update(update_dto)
-    permission_claim = self.get_permissions_from_user(
+    permission_claim = self.get_permissions_from_user_or_token(
       UpdateUserPermissionDto().load(target_user)
     )
     target_user = self.collection.find_one_and_update(
@@ -81,7 +81,7 @@ class UserService():
     self.auth_log_collection.insert_one({
       "user_id": run_uid or target_uid,
       "target_id": target_uid,
-      "event_type": AuthEventTypes.change_profile,
+      "event_type": AuthEventTypes.change_permission,
       "event_details": update_dto,
       "created_at": datetime.now(pytz.UTC),
     })
@@ -113,7 +113,7 @@ class UserService():
     return {
       "access_token": create_access_token(
         identity=str(auth_target["_id"]),
-        additional_claims=self.get_permissions_from_user(auth_target),
+        additional_claims=self.get_permissions_from_user_or_token(auth_target),
       ),
       "refresh_token": create_refresh_token(identity=str(auth_target["_id"]))
     }
@@ -136,7 +136,7 @@ class UserService():
       "is_admin": create_admin_flag,
       "is_valid": create_admin_flag,
     })
-    new_user.update(self.get_permissions_from_user(new_user))
+    new_user.update(self.get_permissions_from_user_or_token(new_user))
     new_user.update(
       created_at = datetime.now(pytz.UTC),
       updated_at = datetime.now(pytz.UTC),
@@ -154,7 +154,7 @@ class UserService():
     result = {
       "access_token": create_access_token(
         identity=str(run_uid),
-        additional_claims=self.get_permissions_from_user(auth_target),
+        additional_claims=self.get_permissions_from_user_or_token(auth_target),
       ),
     }
     if refresh_refresh_token:
@@ -183,6 +183,11 @@ class UserService():
     }
     if validate_user:
       set_data["is_valid"] = True
+      self.auth_log_collection.insert_one({
+        "user_id": run_uid,
+        "event_type": AuthEventTypes.validate_email,
+        "created_at": datetime.now(pytz.UTC),
+      })
     target = self.collection.find_one_and_update(
       { "_id": run_uid },
       { "$set": set_data },
@@ -206,7 +211,7 @@ class UserService():
     
     salt = generate_salt_string()
     new_user = UserSchema().load(create_dto)
-    new_user.update(self.get_permissions_from_user(new_user))
+    new_user.update(self.get_permissions_from_user_or_token(new_user))
     new_user.update(
       password = pbkdf2_sha256.hash(salt),
       created_at = datetime.now(pytz.UTC),
@@ -253,7 +258,7 @@ class UserService():
       raise werkzeug.exceptions.Forbidden('wrong reset request or request expired')
 
   # tool functions
-  def get_permissions_from_user(cls, auth_target):
+  def get_permissions_from_user_or_token(cls, auth_target):
     claim = {
       "is_admin": bool(auth_target.get("is_admin")),
       "is_valid": bool(auth_target.get("is_valid")),
