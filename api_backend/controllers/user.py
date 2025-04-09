@@ -14,7 +14,7 @@ from api_backend.dtos.user import (
   UpdateUserDto,
   UpdateUserPermissionDto,
 )
-from constants import AccessTarget, Permission
+from constants import APITags, AccessTarget, Permission
 from utils import admins_only, check_permission, validate_object_id
 from flask_jwt_extended import decode_token, get_jwt, jwt_required, get_jwt_identity
 from api_backend.services.user import UserService
@@ -27,7 +27,7 @@ user_service = UserService()
 @blueprint.route("/login", methods=["POST"])
 @doc(
   summary='login with credential',
-  tags=['帳戶']
+  tags=[APITags.user]
 )
 @use_kwargs(CredentialDto)
 @marshal_with(LoginTokenDto)
@@ -40,7 +40,7 @@ def login(**kwargs):
 @blueprint.route("/register", methods=["POST"])
 @doc(
   summary='register with credential',
-  tags=['帳戶']
+  tags=[APITags.user]
 )
 @use_kwargs(CredentialDto)
 @marshal_with(GeneralInsertIdDto)
@@ -54,7 +54,7 @@ def register(**kwargs):
 @jwt_required()
 @doc(
   summary='logout and disable token',
-  tags=['帳戶'],
+  tags=[APITags.user],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @marshal_with("", "204")
@@ -67,7 +67,7 @@ def logout():
 @jwt_required()
 @doc(
   summary='get who I am',
-  tags=['帳戶'],
+  tags=[APITags.user],
   security=[Config.JWT_SECURITY_OPTION]
 )
 @marshal_with(PublicUserDto)
@@ -81,7 +81,7 @@ def whoami():
 @jwt_required()
 @doc(
   summary='update profile',
-  tags=['帳戶'],
+  tags=[APITags.user],
   security=[Config.JWT_SECURITY_OPTION]
 )
 @use_kwargs(UpdateUserDto)
@@ -97,10 +97,10 @@ def update_my_profile(**kwargs):
 @check_permission(AccessTarget.user_mgmt, Permission.read)
 @doc(
   summary='query users, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.read),
-  tags=['帳戶', 'ADMIN'],
+  tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
-@marshal_with(PublicUserDto)
+@marshal_with(PublicUserDto(many=True))
 def get_users():
   return flask.jsonify(
     PublicUserDto(many=True).dump(user_service.get_profiles())
@@ -110,7 +110,7 @@ def get_users():
 @check_permission(AccessTarget.user_mgmt, Permission.read)
 @doc(
   summary='get user by user_id, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.read),
-  tags=['帳戶', 'ADMIN'],
+  tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
 @marshal_with(PublicUserDto)
@@ -123,7 +123,7 @@ def get_user_by_id(user_id):
 @check_permission(AccessTarget.user_mgmt, Permission.write)
 @doc(
   summary='update user by user_id, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.write),
-  tags=['帳戶', 'ADMIN'],
+  tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
 @use_kwargs(UpdateUserDto)
@@ -143,7 +143,7 @@ def update_user_by_id(user_id, **kwargs):
 @check_permission(AccessTarget.user_mgmt, Permission.write)
 @doc(
   summary='update user roles by user_id, required permission <%s:%s>' % (AccessTarget.user_role_mgmt, Permission.full),
-  tags=['帳戶', 'ADMIN'],
+  tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
 @use_kwargs(UpdateUserPermissionDto)
@@ -163,7 +163,7 @@ def update_user_roles_by_id(user_id, **kwargs):
 @jwt_required()
 @doc(
   summary='change password',
-  tags=['帳戶'],
+  tags=[APITags.user],
   security=[Config.JWT_SECURITY_OPTION]
 )
 @use_kwargs(UpdatePasswordDto)
@@ -176,7 +176,7 @@ def update_password(**kwargs):
 @blueprint.route("/reset_password_request", methods=["POST"])
 @doc(
   summary='request to reset password',
-  tags=['帳戶'],
+  tags=[APITags.user],
 )
 @use_kwargs(RequestResetPasswordDto)
 def request_password_reset(**kwargs):
@@ -187,7 +187,7 @@ def request_password_reset(**kwargs):
 @blueprint.route("/reset_password/event_id/<event_id>", methods=["POST"])
 @doc(
   summary='reset password with passphrase',
-  tags=['帳戶'],
+  tags=[APITags.user],
 )
 @use_kwargs(ResetPasswordDto)
 def reset_password(event_id, **kwargs):
@@ -201,7 +201,7 @@ def reset_password(event_id, **kwargs):
 @blueprint.route("/refresh", methods=["GET"])
 @doc(
   summary='refresh credential access token in header',
-  tags=['帳戶'],
+  tags=[APITags.user],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @jwt_required(refresh=True)
@@ -217,7 +217,7 @@ def refresh_access_token():
 @blueprint.route("/refresh", methods=["POST"])
 @doc(
   summary='refresh credential access token in body',
-  tags=['帳戶'],
+  tags=[APITags.user],
 )
 @use_kwargs(RefreshAccessTokenDto)
 @marshal_with(LoginTokenDto)
@@ -240,7 +240,7 @@ def refresh_access_token_in_body(**kwargs):
 @blueprint.route("/admin/create_account", methods=["POST"])
 @doc(
   summary='admin create system account',
-  tags=['ADMIN'],
+  tags=[APITags.admin],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @admins_only()

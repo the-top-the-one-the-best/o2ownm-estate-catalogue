@@ -8,7 +8,7 @@ import constants
 name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
 
-@doc(summary="timestamp and healthcheck", tags=["root"])
+@doc(summary="timestamp & heartbeat", tags=[constants.APITags.root])
 @blueprint.route("/", methods=["GET"])
 @marshal_with(HeartBeatSchema)
 def root():
@@ -18,8 +18,8 @@ def root():
     "uptime": constants.uptime.isoformat(),
   })
 
-@doc(summary="gae warmup function", tags=["root"])
+@doc(summary="GAE warmup function", tags=[constants.APITags.root])
 @marshal_with("", "204")
 @blueprint.route("/_ah/warmup", methods=["GET"])
-def _get_warmup():
+def get_warmup():
   return "", 204

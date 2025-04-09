@@ -6,6 +6,7 @@ from api_backend.schemas import SchedulerTaskSchema
 from api_backend.services.file_ops import FileOpsService
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import Config
+from constants import APITags
 
 name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
@@ -16,7 +17,7 @@ fs_ops_svc = FileOpsService()
 @jwt_required()
 @doc(
   summary='upload image for contents',
-  tags=['檔案處裡'],
+  tags=[APITags.file_ops],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @use_kwargs(ImageUploadDto, location="files")
@@ -39,7 +40,7 @@ def upload_image(preferred_max_size=None, **kwargs):
 @jwt_required()
 @doc(
   summary='upload membership excel',
-  tags=['檔案處裡'],
+  tags=[APITags.file_ops],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @use_kwargs(MemberXlsxUploadDto, location="files")
