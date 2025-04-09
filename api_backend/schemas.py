@@ -4,6 +4,7 @@ from bson import ObjectId
 from constants import (
   AuthEventTypes,
   DescriptionContentTypes,
+  RoomLayouts,
   TaskStates,
   TaskTypes,
   Permission,
@@ -125,6 +126,22 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   finished_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+
+class EstateInfoSchema(MongoDefaultDocumentSchema):
+  name = fields.String(missing='')
+  l1_district = fields.String(allow_none=True, missing=None)
+  l2_district = fields.String(allow_none=True, missing=None)
+  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  room_sizes = fields.List(fields.List(fields.Float()))
+  estate_tags = fields.List(fields.String())
+
+class EstateTags(Schema):
+  _id = fields.String()
+  description = fields.String()
+
+class CustomerTags(Schema):
+  _id = fields.String()
+  description = fields.String()
 
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
   # 中文姓名	身分證字號	性別	生日	

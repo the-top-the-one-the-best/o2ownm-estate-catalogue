@@ -55,6 +55,14 @@ class Permission:
   full = "rw"
   none = ""
 
+class RoomLayouts:
+  layout_1 = "1"
+  layout_2 = "2"
+  layout_3 = "3"
+  layout_4 = "4"
+  layout_5_or_more = "5"
+  
+
 class TaskTypes:
   import_customer_xlsx = "import_customer_xlsx"
   export_customer_xlsx = "export_customer_xlsx"

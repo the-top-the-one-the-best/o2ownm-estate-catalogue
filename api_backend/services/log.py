@@ -2,7 +2,7 @@ import pymongo
 import bson
 import pytz
 from datetime import datetime
-from constants import EventTargetTypes, EventTypes
+from constants import AuthEventTypes, AccessTarget
 from config import Config
 
 class LogService():
@@ -12,15 +12,15 @@ class LogService():
   ):
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
-    self.collection = self.db.eventlogs
+    self.auth_log_collection = self.db.authlogs
     return
   
-  def log_event(
+  def log_auth_events(
     self, 
     user_id: bson.ObjectId, 
-    event_type: EventTypes,
+    event_type: AuthEventTypes,
     target_id: bson.ObjectId=None,
-    target_type: EventTargetTypes=None,
+    target_type: AccessTarget=None,
     old_data=None,
     new_data=None,
   ):
@@ -39,6 +39,6 @@ class LogService():
         "new_data": new_data,
       }
       
-    self.collection.insert_one(log)
+    self.auth_log_collection.insert_one(log)
     return
   
