@@ -14,7 +14,7 @@ from api_backend.dtos.user import (
   UpdateUserDto,
   UpdateUserPermissionDto,
 )
-from constants import APITags, AccessTarget, Permission
+from constants import APITags, PermissionTargets, Permission
 from utils import admins_only, check_permission, validate_object_id
 from flask_jwt_extended import decode_token, get_jwt, jwt_required, get_jwt_identity
 from api_backend.services.user import UserService
@@ -94,9 +94,9 @@ def update_my_profile(**kwargs):
   )
 
 @blueprint.route("/profile/query", methods=["GET"])
-@check_permission(AccessTarget.user_mgmt, Permission.read)
+@check_permission(PermissionTargets.user_mgmt, Permission.read)
 @doc(
-  summary='query users, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.read),
+  summary='query users, required permission <%s:%s>' % (PermissionTargets.user_mgmt, Permission.read),
   tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
@@ -107,9 +107,9 @@ def get_users():
   )
 
 @blueprint.route("/profile/_id/<user_id>", methods=["GET"])
-@check_permission(AccessTarget.user_mgmt, Permission.read)
+@check_permission(PermissionTargets.user_mgmt, Permission.read)
 @doc(
-  summary='get user by user_id, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.read),
+  summary='get user by user_id, required permission <%s:%s>' % (PermissionTargets.user_mgmt, Permission.read),
   tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
@@ -120,9 +120,9 @@ def get_user_by_id(user_id):
   )
 
 @blueprint.route("/profile/_id/<user_id>", methods=["PATCH"])
-@check_permission(AccessTarget.user_mgmt, Permission.write)
+@check_permission(PermissionTargets.user_mgmt, Permission.write)
 @doc(
-  summary='update user by user_id, required permission <%s:%s>' % (AccessTarget.user_mgmt, Permission.write),
+  summary='update user by user_id, required permission <%s:%s>' % (PermissionTargets.user_mgmt, Permission.write),
   tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
@@ -140,9 +140,9 @@ def update_user_by_id(user_id, **kwargs):
   )
 
 @blueprint.route("/role/_id/<user_id>", methods=["PATCH"])
-@check_permission(AccessTarget.user_mgmt, Permission.write)
+@check_permission(PermissionTargets.user_mgmt, Permission.write)
 @doc(
-  summary='update user roles by user_id, required permission <%s:%s>' % (AccessTarget.user_role_mgmt, Permission.full),
+  summary='update user roles by user_id, required permission <%s:%s>' % (PermissionTargets.user_role_mgmt, Permission.full),
   tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )

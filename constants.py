@@ -40,7 +40,12 @@ class AuthEventTypes:
   request_reset_password = "request_reset_password"
   validate_email = "validate_email"
 
-class AccessTarget:
+class DataTargets:
+  user = 'user'
+  estate_info = 'estate_info'
+  customer_info = 'customer_info'
+
+class PermissionTargets:
   account = 'account'
   homepage = 'homepage'
   estate_customer_info = 'estate_customer_info'
