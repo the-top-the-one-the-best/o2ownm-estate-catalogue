@@ -127,14 +127,6 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   finished_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
 
-class EstateInfoSchema(MongoDefaultDocumentSchema):
-  name = fields.String(missing='')
-  l1_district = fields.String(allow_none=True, missing=None)
-  l2_district = fields.String(allow_none=True, missing=None)
-  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
-  room_sizes = fields.List(fields.List(fields.Float()))
-  estate_tags = fields.List(fields.String())
-
 class EstateTags(Schema):
   _id = fields.String()
   description = fields.String()
@@ -143,32 +135,25 @@ class CustomerTags(Schema):
   _id = fields.String()
   description = fields.String()
 
+class EstateInfoSchema(MongoDefaultDocumentSchema):
+  name = fields.String(missing="")
+  l1_district = fields.String(allow_none=True, missing=None)
+  l2_district = fields.String(allow_none=True, missing=None)
+  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  room_sizes = fields.List(fields.List(fields.Float()))
+  estate_tags = fields.List(fields.String())
+  created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
-  # 中文姓名	身分證字號	性別	生日	
-  civ_id = fields.String(missing='')
-  name_zh = fields.String(missing='')
-  gender = fields.Integer(missing=None, allow_none=True)
-  birthday = fields.DefaultUTCDateTime(
-    default_timezone=pytz.timezone('Asia/Taipei'),
-  )
-
-  # 學號	畢業系所	系所代碼	畢業級數
-  student_id = fields.String(missing='')
-  graduate_dept = fields.String(missing='')
-  graduate_dept_code = fields.String(missing='')
-  graduate_year = fields.Integer(missing=None)
-
-  # 班別	戶籍電話	戶籍郵遞區號	戶籍地址
-  class_type = fields.String(missing='')
-  phone_registered = fields.String(missing='')
-  zip_registered = fields.String(missing='')
-  address_registered = fields.String(missing='')
-
-  # 通訊電話	通訊郵遞區號	通訊地址	個人Email
-  phone_contact = fields.String(missing='')
-  zip_contact = fields.String(missing='')
-  address_contact = fields.String(missing='')
+  name = fields.String(missing="")
+  title_pronoun = fields.String(missing="")
+  phone_contact = fields.String(missing="")
   email = fields.String(validate=lambda x: x == "" or validate.Email())
-
+  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  l1_district = fields.String(allow_none=True, missing=None)
+  l2_district = fields.String(allow_none=True, missing=None)
+  customer_tags = fields.List(fields.String())
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
