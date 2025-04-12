@@ -170,7 +170,7 @@ def update_user_roles_by_id(user_id, **kwargs):
 def update_password(**kwargs):
   update_pwd_dto = kwargs
   uid = get_jwt_identity()
-  user_service.update_password(validate_object_id(uid), update_pwd_dto)
+  user_service.update_password(validate_object_id(uid), update_pwd_dto, check_old_pwd=True)
   return "", 204
 
 @blueprint.route("/reset_password_request", methods=["POST"])

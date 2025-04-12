@@ -31,6 +31,7 @@ class DescriptionContentTypes:
 class AuthEventTypes:
   admin_create_user = "admin_create_user"
   change_password = "change_password"
+  change_password_failed = "change_password_failed"
   change_permission = "change_permission"
   change_profile = "change_profile"
   login = "login"

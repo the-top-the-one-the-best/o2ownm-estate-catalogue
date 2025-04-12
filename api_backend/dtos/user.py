@@ -28,6 +28,7 @@ class RequestResetPasswordDto(Schema):
 
 class UpdatePasswordDto(Schema):
   new_password = fields.String(required=True)
+  old_password = fields.String()
   class Meta:
     unknown = EXCLUDE
 

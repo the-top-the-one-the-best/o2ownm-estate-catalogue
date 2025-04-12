@@ -175,7 +175,7 @@ class UserService():
     self.log_svc.log_auth_events(uid, AuthEventTypes.logout)
     return
 
-  def update_password(self, run_uid: ObjectId, update_pwd_dto, validate_user=False):
+  def update_password(self, run_uid: ObjectId, update_pwd_dto, check_old_pwd=False, validate_user=False):
     new_password = update_pwd_dto.get("new_password")
     set_data = {
       "password": pbkdf2_sha256.hash(new_password),
@@ -184,11 +184,17 @@ class UserService():
     if validate_user:
       set_data["is_valid"] = True
 
-    target = self.collection.find_one_and_update({ "_id": run_uid }, { "$set": set_data })
-    
-    if not target:
+    auth_target = self.collection.find_one({ "_id": run_uid })
+    if not auth_target:
       raise werkzeug.exceptions.NotFound()
     
+    if check_old_pwd:
+      auth_result = pbkdf2_sha256.verify(update_pwd_dto["old_password"], auth_target["password"])
+      if not auth_result:
+        self.log_svc.log_auth_events(auth_target["_id"], AuthEventTypes.change_password_failed)
+        raise werkzeug.exceptions.Forbidden("wrong old password")
+    
+    self.collection.find_one_and_update({ "_id": run_uid }, { "$set": set_data })
     self.log_svc.log_auth_events(run_uid, AuthEventTypes.change_password)
     if validate_user:
       self.log_svc.log_auth_events(run_uid, AuthEventTypes.validate_email)
