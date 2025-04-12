@@ -189,7 +189,7 @@ class UserService():
       raise werkzeug.exceptions.NotFound()
     
     if check_old_pwd:
-      auth_result = pbkdf2_sha256.verify(update_pwd_dto["old_password"], auth_target["password"])
+      auth_result = pbkdf2_sha256.verify(update_pwd_dto.get("old_password") or '', auth_target["password"])
       if not auth_result:
         self.log_svc.log_auth_events(auth_target["_id"], AuthEventTypes.change_password_failed)
         raise werkzeug.exceptions.Forbidden("wrong old password")
