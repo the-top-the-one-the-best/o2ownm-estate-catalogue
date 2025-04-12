@@ -12,7 +12,7 @@ from api_backend.services.email_notification import EmailService
 from api_backend.services.log import LogService
 from config import Config
 from passlib.hash import pbkdf2_sha256
-from constants import DataTargets, PermissionTargets, AuthEventTypes, Permission
+from constants import DataTargets, AuthEventTypes, Permission
 from flask_jwt_extended import (
   create_access_token,
   create_refresh_token, 
@@ -37,13 +37,13 @@ class UserService():
     targets = self.collection.find({})
     return list(targets)
 
-  def get_profile_by_uid(self, target_uid: ObjectId):
+  def get_profile_by_uid(self, target_uid):
     target = self.collection.find_one({ "_id": target_uid })
     if not target:
       raise werkzeug.exceptions.NotFound()
     return target
   
-  def update_profile_by_uid(self, target_uid: ObjectId, update_dto, run_uid=None):
+  def update_profile_by_uid(self, target_uid, update_dto, run_uid=None):
     if update_dto.get("email"):
       update_dto["email"] = update_dto["email"].lower()
       credential_existed = self.collection.find_one(
@@ -69,7 +69,7 @@ class UserService():
     )
     return updated
   
-  def update_permissions_by_uid(self, target_uid: ObjectId, update_dto, run_uid=None):
+  def update_permissions_by_uid(self, target_uid, update_dto, run_uid=None):
     update_dto["updated_at"] = datetime.now(pytz.UTC)
     target_user = self.collection.find_one({ "_id": target_uid })
     if not target_user:
@@ -147,7 +147,7 @@ class UserService():
     )
     return { "_id": str(new_id) }
   
-  def refresh_access_token(self, run_uid: ObjectId, refresh_refresh_token=True):
+  def refresh_access_token(self, run_uid, refresh_refresh_token=True):
     auth_target = self.collection.find_one({ "_id": run_uid })
     result = {
       "access_token": create_access_token(
@@ -175,7 +175,7 @@ class UserService():
     self.log_svc.log_auth_events(uid, AuthEventTypes.logout)
     return
 
-  def update_password(self, run_uid: ObjectId, update_pwd_dto, check_old_pwd=False, validate_user=False):
+  def update_password(self, run_uid, update_pwd_dto, check_old_pwd=False, validate_user=False):
     new_password = update_pwd_dto.get("new_password")
     set_data = {
       "password": pbkdf2_sha256.hash(new_password),
@@ -237,7 +237,7 @@ class UserService():
     self.send_password_reset_email(email=email)
     return
 
-  def reset_password_with_event_id(self, event_id: ObjectId, reset_dto):
+  def reset_password_with_event_id(self, event_id, reset_dto):
     _now = datetime.now(pytz.UTC)
     self.chpwd_request_collection.delete_many({'expired_at': { '$lt': _now }})
     challenge_entry = self.chpwd_request_collection.find_one({"_id": event_id, 'fulfilled': False })
@@ -276,7 +276,7 @@ class UserService():
   def send_password_reset_email(
       self, 
       email: str = None,
-      uid: ObjectId = None,
+      uid = None,
       validate_user = False,
       ttl=Config.CHANGE_PWD_VALID_PERIOD,
     ):
