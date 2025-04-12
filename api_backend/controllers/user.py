@@ -250,6 +250,6 @@ def admin_create_system_account(**kwargs):
   uid = get_jwt_identity()
   return flask.jsonify(
     PublicUserDto().dump(
-      user_service.admin_create_user(uid, kwargs)
+      user_service.admin_create_user(validate_object_id(uid), kwargs)
     )
   )
