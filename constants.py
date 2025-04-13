@@ -16,7 +16,8 @@ ALLOWED_IMAGE_MIME_TYPES = {
 
 class APITags:
   admin = "管理 API"
-  customer_info = "客戶資料"
+  customer_info = "建案客資管理-客戶資料"
+  estate_info = "建案客資管理-建案資料"
   file_ops = "檔案處裡"
   resources = "資料資源"
   root = "系統 Root"

@@ -116,6 +116,10 @@ class CustomerTags(Schema):
   _id = fields.String()
   description = fields.String()
 
+class RoomSizeSchema(Schema):
+  size_min = fields.Float(metadata={"example": 25})
+  size_max = fields.Float(metadata={"example": 27.5})
+
 class EstateInfoSchema(MongoDefaultDocumentSchema):
   name = fields.String(missing="")
   construction_company = fields.String(missing="")
@@ -123,7 +127,7 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   l1_district = fields.String(allow_none=True, missing=None)
   l2_district = fields.String(allow_none=True, missing=None)
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
-  room_sizes = fields.List(fields.List(fields.Float()))
+  room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   estate_tags = fields.List(fields.String())
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)

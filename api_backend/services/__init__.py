@@ -3,4 +3,5 @@ from . import (
   user,
   file_ops,
   email_notification,
+  estate_info,
 )
