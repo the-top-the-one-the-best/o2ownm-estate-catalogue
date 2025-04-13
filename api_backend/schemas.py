@@ -97,24 +97,6 @@ class _ImageSchema(Schema):
   src = fields.Url(required=True)
   href = fields.Url(required=False, allow_none=True, missing=None)
 
-class _DescriptionSchema(Schema):
-  type = fields.String(validate=validate.OneOf(enum_set(DescriptionContentTypes)))
-  images = fields.Nested(_ImageSchema, many=True, required=False)
-  video_url = fields.Url(required=False, allow_none=True, missing=None)
-  content = fields.String(required=False)
-
-class _GenericMultimediaBlockSchema(MongoDefaultDocumentSchema):
-  title = fields.String(required=True)
-  description = fields.Nested(_DescriptionSchema, many=True, required=True)
-  created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
-  updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
-
-class LatestNewsSchema(_GenericMultimediaBlockSchema):
-  start_time = fields.DefaultUTCDateTime()
-  end_time = fields.DefaultUTCDateTime()
-  creator_id = fields.ObjectId()
-  updater_id = fields.ObjectId()
-
 class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   task_type = fields.String(validate=validate.OneOf(enum_set(TaskTypes)))
   state = fields.String(validate=validate.OneOf(enum_set(TaskStates)))
@@ -137,6 +119,8 @@ class CustomerTags(Schema):
 
 class EstateInfoSchema(MongoDefaultDocumentSchema):
   name = fields.String(missing="")
+  construction_company = fields.String(missing="")
+  address = fields.String()
   l1_district = fields.String(allow_none=True, missing=None)
   l2_district = fields.String(allow_none=True, missing=None)
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
@@ -146,9 +130,10 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
 
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
+  estate_info_id = fields.ObjectId()
   name = fields.String(missing="")
   title_pronoun = fields.String(missing="")
-  phone_contact = fields.String(missing="")
+  phone = fields.String(missing="")
   email = fields.String(validate=lambda x: x == "" or validate.Email())
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
@@ -157,3 +142,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   customer_tags = fields.List(fields.String())
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+
+class DistrictInfoSchema(Schema):
+  l1_district = fields.String(allow_none=True, missing=None)
+  l2_district = fields.String(allow_none=True, missing=None)

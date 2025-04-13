@@ -20,6 +20,8 @@ def create_page_result_dto(item_schema: Type[Schema]):
     results = fields.List(fields.Nested(item_schema))
     page_size = fields.Integer()
     page_number = fields.Integer()
+
+    # matched count is for preview of export tasks
     matched_count = fields.Integer()
     class Meta:
       unknown = EXCLUDE

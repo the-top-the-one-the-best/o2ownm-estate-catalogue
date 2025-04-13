@@ -1,8 +1,7 @@
 from datetime import datetime
-import enum
 import pytz
 
-version = '250314.1238'
+version = "250314.1238"
 uptime = datetime.now(pytz.UTC)
 
 XLSX_MIME_TYPES = {
@@ -16,17 +15,12 @@ ALLOWED_IMAGE_MIME_TYPES = {
 }
 
 class APITags:
-  admin = '管理 API'
-  customer_info = '客戶資料'
-  file_ops = '檔案處裡'
-  resources = '資料資源'
-  root = '系統 Root'
-  user = '帳戶'
-
-class DescriptionContentTypes:
-  images = "images"
-  text = "text"
-  video = "video"
+  admin = "管理 API"
+  customer_info = "客戶資料"
+  file_ops = "檔案處裡"
+  resources = "資料資源"
+  root = "系統 Root"
+  user = "帳戶"
 
 class AuthEventTypes:
   admin_create_user = "admin_create_user"
@@ -42,18 +36,18 @@ class AuthEventTypes:
   validate_email = "validate_email"
 
 class DataTargets:
-  user = 'user'
-  estate_info = 'estate_info'
-  customer_info = 'customer_info'
+  user = "user"
+  estate_info = "estate_info"
+  customer_info = "customer_info"
 
 class PermissionTargets:
-  account = 'account'
-  homepage = 'homepage'
-  estate_customer_info = 'estate_customer_info'
-  estate_customer_tag = 'estate_customer_tag'
-  user_role_mgmt = 'user_role_mgmt'
-  user_mgmt = 'user_mgmt'
-  system_log = 'system_log'
+  account = "account"
+  homepage = "homepage"
+  estate_customer_info = "estate_customer_info"
+  estate_customer_tag = "estate_customer_tag"
+  user_role_mgmt = "user_role_mgmt"
+  user_mgmt = "user_mgmt"
+  system_log = "system_log"
 
 class Permission:
   read = "r"
@@ -81,7 +75,7 @@ class TaskStates:
 
 def enum_set(c):
   return set(
-    [value for key, value in c.__dict__.items() if not key.startswith('_')]
+    [value for key, value in c.__dict__.items() if not key.startswith("_")]
   )
 
 MEMBER_XLSX_HEADER_MAP = {
