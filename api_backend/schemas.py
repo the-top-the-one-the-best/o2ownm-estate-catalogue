@@ -3,7 +3,6 @@ from marshmallow import Schema, ValidationError, fields, validate, missing
 from bson import ObjectId
 from constants import (
   AuthEventTypes,
-  DescriptionContentTypes,
   RoomLayouts,
   TaskStates,
   TaskTypes,
