@@ -38,7 +38,7 @@ class FileOpsService():
       except:
         return
   
-  def upload_and_process_member_xlsx(self, uid, xlsx_file):
+  def upload_and_process_member_xlsx(self, user_id, xlsx_file):
     if xlsx_file.filename == '':
       raise werkzeug.exceptions.BadRequest('no file found')
     if xlsx_file.mimetype not in constants.XLSX_MIME_TYPES:
@@ -47,7 +47,7 @@ class FileOpsService():
           ', '.join(mimetype for mimetype in constants.XLSX_MIME_TYPES)
         )
       )
-    file_dir_final = os.path.join(self.upload_path, str(uid))
+    file_dir_final = os.path.join(self.upload_path, str(user_id))
     file_name = '%s' % (str(bson.ObjectId()))
     file_ext = constants.XLSX_MIME_TYPES[xlsx_file.mimetype]
     final_file_path = os.path.join(file_dir_final, '%s.%s' % (file_name, file_ext))
@@ -58,7 +58,7 @@ class FileOpsService():
       _id = task_id,
       task_type = constants.TaskTypes.import_customer_xlsx,
       state = constants.TaskStates.pending,
-      creator_id = uid,
+      creator_id = user_id,
       trial = 0,
       params = {
         "original_file_name": xlsx_file.filename,
@@ -78,7 +78,7 @@ class FileOpsService():
     process.start()
     return task_entry
 
-  def upload_image(self, uid, image_file, preferred_max_size=2048):
+  def upload_image(self, user_id, image_file, preferred_max_size=2048):
     if image_file.filename == '':
       raise werkzeug.exceptions.BadRequest('no file found')
     if image_file.mimetype not in constants.ALLOWED_IMAGE_MIME_TYPES:
@@ -88,7 +88,7 @@ class FileOpsService():
         )
       )
     file_ext = constants.ALLOWED_IMAGE_MIME_TYPES[image_file.mimetype]
-    file_dir_final = os.path.join(self.upload_path, str(uid))
+    file_dir_final = os.path.join(self.upload_path, str(user_id))
     if not os.path.isdir(file_dir_final):
       os.makedirs(file_dir_final, exist_ok=True)
 
@@ -103,7 +103,7 @@ class FileOpsService():
         preferred_max_size
       )
       os.remove(tmp_image_path)
-      return os.path.join(self.url_pfx, str(uid), os.path.basename(final_image_path)), new_width, new_height
+      return os.path.join(self.url_pfx, str(user_id), os.path.basename(final_image_path)), new_width, new_height
     except:
       raise werkzeug.exceptions.InternalServerError('processing image failed')
     

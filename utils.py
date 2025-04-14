@@ -35,6 +35,15 @@ def validate_object_id(_id, raise_exception=True):
       raise werkzeug.exceptions.BadRequest("%s is not a valid ObjectId" % str(_id))
     return False
 
+# mongo helper
+def get_district_query(district_schema):
+  result = {}
+  if district_schema.get('l1_district'):
+    result["l1_district"] = district_schema["l1_district"]
+  if district_schema.get('l2_district'):
+    result["l2_district"] = district_schema["l2_district"]
+  return result
+
 def get_mongo_period(start: datetime, end: datetime):
   interval = {}
   if start:

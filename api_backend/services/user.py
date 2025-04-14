@@ -37,41 +37,41 @@ class UserService():
     targets = self.collection.find({})
     return list(targets)
 
-  def get_profile_by_uid(self, target_uid):
-    target = self.collection.find_one({ "_id": target_uid })
+  def get_profile_by_user_id(self, target_user_id):
+    target = self.collection.find_one({ "_id": target_user_id })
     if not target:
       raise werkzeug.exceptions.NotFound()
     return target
   
-  def update_profile_by_uid(self, target_uid, update_dto, run_uid=None):
+  def update_profile_by_user_id(self, target_user_id, update_dto, run_user_id=None):
     if update_dto.get("email"):
       update_dto["email"] = update_dto["email"].lower()
       credential_existed = self.collection.find_one(
-        { "email": update_dto["email"], "_id": { "ne": target_uid } },
+        { "email": update_dto["email"], "_id": { "ne": target_user_id } },
         { "_id": 1 },
       )
       if credential_existed:
         raise werkzeug.exceptions.Conflict("email already registered")
     update_dto["updated_at"] = datetime.now(pytz.UTC)
     updated = self.collection.find_one_and_update(
-      { "_id": target_uid },
+      { "_id": target_user_id },
       { "$set": update_dto },
       return_document=pymongo.ReturnDocument.AFTER,
     )
     if not updated:
       raise werkzeug.exceptions.NotFound()
     self.log_svc.log_auth_events(
-      uid=run_uid or target_uid,
+      user_id=run_user_id or target_user_id,
       event_type=AuthEventTypes.change_profile,
-      target_id=target_uid,
+      target_id=target_user_id,
       target_type=DataTargets.user,
       new_data=update_dto,
     )
     return updated
   
-  def update_permissions_by_uid(self, target_uid, update_dto, run_uid=None):
+  def update_permissions_by_user_id(self, target_user_id, update_dto, run_user_id=None):
     update_dto["updated_at"] = datetime.now(pytz.UTC)
-    target_user = self.collection.find_one({ "_id": target_uid })
+    target_user = self.collection.find_one({ "_id": target_user_id })
     if not target_user:
       raise werkzeug.exceptions.NotFound()
     target_user.update(update_dto)
@@ -79,14 +79,14 @@ class UserService():
       UpdateUserPermissionDto().load(target_user)
     )
     target_user = self.collection.find_one_and_update(
-      { "_id": target_uid },
+      { "_id": target_user_id },
       { "$set": permission_claim },
       return_document=pymongo.ReturnDocument.AFTER,
     )
     self.log_svc.log_auth_events(
-      uid=run_uid or target_uid,
+      user_id=run_user_id or target_user_id,
       event_type=AuthEventTypes.change_permission,
-      target_id=target_uid,
+      target_id=target_user_id,
       target_type=DataTargets.user,
       new_data=update_dto,
     )
@@ -139,7 +139,7 @@ class UserService():
     )
     new_id = self.collection.insert_one(new_user).inserted_id
     self.log_svc.log_auth_events(
-      uid=new_id,
+      user_id=new_id,
       event_type=AuthEventTypes.register,
       target_id=new_id,
       target_type=DataTargets.user,
@@ -147,11 +147,11 @@ class UserService():
     )
     return { "_id": str(new_id) }
   
-  def refresh_access_token(self, run_uid, refresh_refresh_token=True):
-    auth_target = self.collection.find_one({ "_id": run_uid })
+  def refresh_access_token(self, run_user_id, refresh_refresh_token=True):
+    auth_target = self.collection.find_one({ "_id": run_user_id })
     result = {
       "access_token": create_access_token(
-        identity=str(run_uid),
+        identity=str(run_user_id),
         additional_claims=self.get_permissions_from_user_or_token(auth_target),
       ),
     }
@@ -161,7 +161,7 @@ class UserService():
   
   def logout(self, raw_jwt):
     jti = raw_jwt.get("jti")
-    uid = bson.ObjectId(raw_jwt.get(Config.JWT_IDENTITY_CLAIM))
+    user_id = bson.ObjectId(raw_jwt.get(Config.JWT_IDENTITY_CLAIM))
     expiration_timestamp = raw_jwt.get("exp")
     expiration_datetime = datetime.fromtimestamp(expiration_timestamp, tz=pytz.UTC) if expiration_timestamp else None
     _now = datetime.now(pytz.UTC)
@@ -172,10 +172,10 @@ class UserService():
         "created_at": datetime.now(pytz.UTC),
       })
     self.blacklist_jti_collection.delete_many({"exp_datetime": {"$lt": _now}})
-    self.log_svc.log_auth_events(uid, AuthEventTypes.logout)
+    self.log_svc.log_auth_events(user_id, AuthEventTypes.logout)
     return
 
-  def update_password(self, run_uid, update_pwd_dto, check_old_pwd=False, validate_user=False):
+  def update_password(self, run_user_id, update_pwd_dto, check_old_pwd=False, validate_user=False):
     new_password = update_pwd_dto.get("new_password")
     set_data = {
       "password": pbkdf2_sha256.hash(new_password),
@@ -184,7 +184,7 @@ class UserService():
     if validate_user:
       set_data["is_valid"] = True
 
-    auth_target = self.collection.find_one({ "_id": run_uid })
+    auth_target = self.collection.find_one({ "_id": run_user_id })
     if not auth_target:
       raise werkzeug.exceptions.NotFound()
     
@@ -194,13 +194,13 @@ class UserService():
         self.log_svc.log_auth_events(auth_target["_id"], AuthEventTypes.change_password_failed)
         raise werkzeug.exceptions.Forbidden("wrong old password")
     
-    self.collection.find_one_and_update({ "_id": run_uid }, { "$set": set_data })
-    self.log_svc.log_auth_events(run_uid, AuthEventTypes.change_password)
+    self.collection.find_one_and_update({ "_id": run_user_id }, { "$set": set_data })
+    self.log_svc.log_auth_events(run_user_id, AuthEventTypes.change_password)
     if validate_user:
-      self.log_svc.log_auth_events(run_uid, AuthEventTypes.validate_email)
+      self.log_svc.log_auth_events(run_user_id, AuthEventTypes.validate_email)
     return
 
-  def admin_create_user(self, run_uid, create_dto, send_email=True):
+  def admin_create_user(self, run_user_id, create_dto, send_email=True):
     create_dto["email"] = create_dto["email"].lower()
     credential_existed = self.collection.find_one(
       { "email": create_dto["email"] },
@@ -218,7 +218,7 @@ class UserService():
     )
     new_id = self.collection.insert_one(new_user).inserted_id
     self.log_svc.log_auth_events(
-      uid=run_uid,
+      user_id=run_user_id,
       event_type=AuthEventTypes.admin_create_user,
       target_id=new_id,
       target_type=DataTargets.user,
@@ -226,7 +226,7 @@ class UserService():
     )
     if send_email:
       self.send_password_reset_email(
-        uid=new_id,
+        user_id=new_id,
         validate_user=True,
         ttl=Config.CREATE_ACCOUNT_VALID_PERIOD,
       )
@@ -276,7 +276,7 @@ class UserService():
   def send_password_reset_email(
       self, 
       email: str = None,
-      uid = None,
+      user_id = None,
       validate_user = False,
       ttl=Config.CHANGE_PWD_VALID_PERIOD,
     ):
@@ -284,14 +284,14 @@ class UserService():
     auth_target = None
     if email:
       auth_target = self.collection.find_one({"email": email})
-    elif uid:
-      auth_target = self.collection.find_one({"_id": uid})
+    elif user_id:
+      auth_target = self.collection.find_one({"_id": user_id})
     if not auth_target:
       raise werkzeug.exceptions.NotFound()
     
     # check previous entry, limit # of requests per day
     n_requests_past_24hrs = self.log_svc.count_auth_log_events(
-      uid=auth_target["_id"],
+      user_id=auth_target["_id"],
       event_type=AuthEventTypes.request_reset_password,
     )
     

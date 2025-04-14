@@ -1,9 +1,14 @@
 from marshmallow import EXCLUDE, fields, Schema, validate
-from api_backend.dtos.generic import create_page_result_dto
-from api_backend.schemas import DistrictInfoSchema, EstateInfoSchema, RoomSizeSchema
+from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
+from api_backend.schemas import DistrictInfoSchema, EstateInfoSchema, ObjectIdHelper, RoomSizeSchema
 from marshmallow.validate import Range
 from constants import RoomLayouts, enum_set
 
+try:
+  fields.ObjectId
+except:
+  fields.ObjectId = ObjectIdHelper
+  
 class UpsertEstateInfoDto(Schema):
   name = fields.String(required=True)
   construction_company = fields.String(missing="")
@@ -14,7 +19,8 @@ class UpsertEstateInfoDto(Schema):
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   estate_tags = fields.List(fields.String())
 
-class QueryEstateInfoDto(Schema):
+class QueryEstateInfoDto(GeneralPagedQueryDto):
+  _ids = fields.List(fields.ObjectId)
   name = fields.String()
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   # Discrict query example:
@@ -24,12 +30,11 @@ class QueryEstateInfoDto(Schema):
   # ]
   districts = fields.List(fields.Nested(DistrictInfoSchema))
   estate_tags = fields.List(fields.String())
-  page_size = fields.Integer(missing=20, validate=[Range(min=1, max=100, error="Value must be in [1, 100]")])
-  page_number = fields.Integer(missing=1, validate=[Range(min=1, error="Value must >= 1")])
   class Meta:
     unknown = EXCLUDE
 
 class PublicEstateInfoDto(EstateInfoSchema):
-  pass
+  class Meta:
+    unknown = EXCLUDE
 
 PagedEstateInfoDto = create_page_result_dto(PublicEstateInfoDto)

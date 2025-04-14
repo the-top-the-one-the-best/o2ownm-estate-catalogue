@@ -12,6 +12,11 @@ from constants import (
 
 # helper class for ObjectId conversion
 class ObjectIdHelper(fields.String):
+  metadata = { "example": "0" * 24 }
+  def __init__(self, *args, **kwargs):
+    kwargs.setdefault("metadata", {})
+    kwargs["metadata"].setdefault("example", "661ccc3d378a65e30fb784ea")
+    super().__init__(*args, **kwargs)
   def _deserialize(self, value, attr, data, **kwargs):
     try:
       return ObjectId(value)
@@ -129,8 +134,12 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   estate_tags = fields.List(fields.String())
+  
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  creator_id = fields.ObjectId()
+  updater_id = fields.ObjectId()
+
 
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
   estate_info_id = fields.ObjectId()
@@ -143,8 +152,12 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   l1_district = fields.String(allow_none=True, missing=None)
   l2_district = fields.String(allow_none=True, missing=None)
   customer_tags = fields.List(fields.String())
+
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  creator_id = fields.ObjectId()
+  updater_id = fields.ObjectId()
+  insert_task_id = fields.ObjectId()
 
 class DistrictInfoSchema(Schema):
   l1_district = fields.String(allow_none=True, missing=None)

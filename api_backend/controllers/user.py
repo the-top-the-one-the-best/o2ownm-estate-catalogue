@@ -72,9 +72,9 @@ def logout():
 )
 @marshal_with(PublicUserDto)
 def whoami():
-  uid = get_jwt_identity()
+  user_id = get_jwt_identity()
   return flask.jsonify(
-    PublicUserDto().dump(user_service.get_profile_by_uid(validate_object_id(uid)))
+    PublicUserDto().dump(user_service.get_profile_by_user_id(validate_object_id(user_id)))
   )
 
 @blueprint.route("/profile/mine", methods=["PATCH"])
@@ -87,16 +87,18 @@ def whoami():
 @use_kwargs(UpdateUserDto)
 @marshal_with(PublicUserDto)
 def update_my_profile(**kwargs):
-  uid = get_jwt_identity()
+  user_id = get_jwt_identity()
   update_dto = kwargs
   return flask.jsonify(
-    PublicUserDto().dump(user_service.update_profile_by_uid(validate_object_id(uid), update_dto))
+    PublicUserDto().dump(
+      user_service.update_profile_by_user_id(validate_object_id(user_id), update_dto)
+    )
   )
 
 @blueprint.route("/profile/query", methods=["GET"])
 @check_permission(PermissionTargets.user_mgmt, Permission.read)
 @doc(
-  summary='query users, required permission <%s:%s>' % (PermissionTargets.user_mgmt, Permission.read),
+  summary='query users, permission <%s:%s> required' % (PermissionTargets.user_mgmt, Permission.read),
   tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
@@ -109,14 +111,16 @@ def get_users():
 @blueprint.route("/profile/_id/<user_id>", methods=["GET"])
 @check_permission(PermissionTargets.user_mgmt, Permission.read)
 @doc(
-  summary='get user by user_id, required permission <%s:%s>' % (PermissionTargets.user_mgmt, Permission.read),
+  summary='get user by user_id, permission <%s:%s> required' % (PermissionTargets.user_mgmt, Permission.read),
   tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
 @marshal_with(PublicUserDto)
 def get_user_by_id(user_id):
   return flask.jsonify(
-    PublicUserDto().dump(user_service.get_profile_by_uid(validate_object_id(user_id)))
+    PublicUserDto().dump(
+      user_service.get_profile_by_user_id(validate_object_id(user_id))
+    )
   )
 
 @blueprint.route("/profile/_id/<user_id>", methods=["PATCH"])
@@ -131,10 +135,10 @@ def get_user_by_id(user_id):
 def update_user_by_id(user_id, **kwargs):
   return flask.jsonify(
     PublicUserDto().dump(
-      user_service.update_profile_by_uid(
+      user_service.update_profile_by_user_id(
         validate_object_id(user_id),
         kwargs,
-        run_uid=validate_object_id(get_jwt_identity()),
+        run_user_id=validate_object_id(get_jwt_identity()),
       )
     )
   )
@@ -151,10 +155,10 @@ def update_user_by_id(user_id, **kwargs):
 def update_user_roles_by_id(user_id, **kwargs):
   return flask.jsonify(
     PublicUserDto().dump(
-      user_service.update_permissions_by_uid(
+      user_service.update_permissions_by_user_id(
         validate_object_id(user_id),
         kwargs,
-        run_uid=validate_object_id(get_jwt_identity()),
+        run_user_id=validate_object_id(get_jwt_identity()),
       )
     )
   )
@@ -169,8 +173,12 @@ def update_user_roles_by_id(user_id, **kwargs):
 @use_kwargs(UpdatePasswordDto)
 def update_password(**kwargs):
   update_pwd_dto = kwargs
-  uid = get_jwt_identity()
-  user_service.update_password(validate_object_id(uid), update_pwd_dto, check_old_pwd=True)
+  user_id = get_jwt_identity()
+  user_service.update_password(
+    validate_object_id(user_id),
+    update_pwd_dto,
+    check_old_pwd=True,
+  )
   return "", 204
 
 @blueprint.route("/reset_password_request", methods=["POST"])
@@ -207,10 +215,10 @@ def reset_password(event_id, **kwargs):
 @jwt_required(refresh=True)
 @marshal_with(LoginTokenDto)
 def refresh_access_token():
-  uid = get_jwt_identity()
+  user_id = get_jwt_identity()
   return flask.jsonify(
     LoginTokenDto().dump(
-      user_service.refresh_access_token(validate_object_id(uid))
+      user_service.refresh_access_token(validate_object_id(user_id))
     )
   )
 
@@ -228,10 +236,10 @@ def refresh_access_token_in_body(**kwargs):
   refresh_token = data["refresh_token"]
   try:
     decoded_token = decode_token(refresh_token)
-    uid = decoded_token[Config.JWT_IDENTITY_CLAIM]
+    user_id = decoded_token[Config.JWT_IDENTITY_CLAIM]
     return flask.jsonify(
       LoginTokenDto().dump(
-        user_service.refresh_access_token(validate_object_id(uid))
+        user_service.refresh_access_token(validate_object_id(user_id))
       )
     )
   except:
@@ -247,9 +255,9 @@ def refresh_access_token_in_body(**kwargs):
 @use_kwargs(CreateUserDto)
 @marshal_with(PublicUserDto)
 def admin_create_system_account(**kwargs):
-  uid = get_jwt_identity()
+  user_id = get_jwt_identity()
   return flask.jsonify(
     PublicUserDto().dump(
-      user_service.admin_create_user(validate_object_id(uid), kwargs)
+      user_service.admin_create_user(validate_object_id(user_id), kwargs)
     )
   )

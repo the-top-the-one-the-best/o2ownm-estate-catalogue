@@ -24,11 +24,11 @@ fs_ops_svc = FileOpsService()
 @use_kwargs(ImageUploadQueryDto, location="query")  # Add query params
 @marshal_with(ImageUploadResultDto)
 def upload_image(preferred_max_size=None, **kwargs):
-  uid = get_jwt_identity()
+  user_id = get_jwt_identity()
   if 'image' not in flask.request.files:
     raise werkzeug.exceptions.BadRequest('no file found')
   image_file = flask.request.files['image']
-  url, new_width, new_height = fs_ops_svc.upload_image(uid, image_file, preferred_max_size)
+  url, new_width, new_height = fs_ops_svc.upload_image(user_id, image_file, preferred_max_size)
   return flask.jsonify({
     "url": url,
     "new_width": new_width, 
@@ -46,9 +46,9 @@ def upload_image(preferred_max_size=None, **kwargs):
 @use_kwargs(MemberXlsxUploadDto, location="files")
 @marshal_with(SchedulerTaskSchema)
 def upload_membership_xlsx(**kwargs):
-  uid = get_jwt_identity()
+  user_id = get_jwt_identity()
   if 'xlsx' not in flask.request.files:
     raise werkzeug.exceptions.BadRequest('no file found')
   xlsx_file = flask.request.files['xlsx']
-  new_task = fs_ops_svc.upload_and_process_member_xlsx(uid, xlsx_file)
+  new_task = fs_ops_svc.upload_and_process_member_xlsx(user_id, xlsx_file)
   return flask.jsonify(SchedulerTaskSchema().dump(new_task))

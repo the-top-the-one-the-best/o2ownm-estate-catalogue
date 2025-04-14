@@ -17,14 +17,14 @@ class LogService():
   
   def count_auth_log_events(
     self,
-    uid: bson.ObjectId=None,
+    user_id: bson.ObjectId=None,
     event_type: AuthEventTypes=None,
     target_id: bson.ObjectId=None,
     track_period=timedelta(days=1)
   ):
     filter = {'created_at': {'gte': datetime.now(pytz.UTC) - track_period}}
-    if uid:
-      filter['user_id'] = uid
+    if user_id:
+      filter['user_id'] = user_id
     if event_type:
       filter['event_type'] = event_type
     if target_id:
@@ -33,14 +33,14 @@ class LogService():
 
   def log_auth_events(
     self, 
-    uid: bson.ObjectId, 
+    user_id: bson.ObjectId, 
     event_type: AuthEventTypes,
     target_id: bson.ObjectId=None,
     target_type: DataTargets=None,
     new_data=None,
   ):
     log = {
-      "user_id": uid,
+      "user_id": user_id,
       "event_type": event_type,
       "created_at": datetime.now(pytz.UTC),
     }
