@@ -1,7 +1,12 @@
 import flask
 from flask_apispec import doc, marshal_with, use_kwargs
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from api_backend.dtos.estate_info import PagedEstateInfoDto, QueryEstateInfoDto, UpsertEstateInfoDto, PublicEstateInfoDto
+from api_backend.dtos.estate_info import (
+  PagedEstateInfoDto,
+  QueryEstateInfoDto,
+  UpsertEstateInfoDto,
+  PublicEstateInfoDto,
+)
 from api_backend.services.estate_info import EstateInfoService
 from config import Config
 from constants import APITags, Permission, PermissionTargets

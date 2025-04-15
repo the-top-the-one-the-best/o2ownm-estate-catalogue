@@ -6,7 +6,7 @@ import traceback
 import jieba
 import urllib.request
 from datetime import datetime
-from constants import TaskStates, TaskTypes, enum_set, MEMBER_XLSX_HEADER_MAP
+from constants import TaskStates, TaskTypes, enum_set, CUSTOMER_XLSX_HEADER_MAP
 from config import Config
 
 def process_task(task_id, max_retrial=5):
@@ -79,7 +79,7 @@ def process_member_xlsx(file_path, mongo_client=None):
   ws = wb.active
   headers = [cell.value for cell in ws[1]]
   # Ensure all headers exist in the mapping
-  column_map = {index: MEMBER_XLSX_HEADER_MAP.get(header, None) for index, header in enumerate(headers)}
+  column_map = {index: CUSTOMER_XLSX_HEADER_MAP.get(header, None) for index, header in enumerate(headers)}
   if None in column_map.values():
     missing_headers = [headers[i] for i, v in column_map.items() if v is None]
     raise ValueError("Warning: Unmapped headers found - %s" % (str(missing_headers), ))

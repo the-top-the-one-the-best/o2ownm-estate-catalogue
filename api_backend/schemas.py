@@ -1,5 +1,5 @@
 import pytz
-from marshmallow import Schema, ValidationError, fields, validate, missing
+from marshmallow import Schema, ValidationError, fields, post_dump, post_load, validate, missing
 from bson import ObjectId
 from constants import (
   AuthEventTypes,
@@ -89,6 +89,16 @@ class UserSchema(MongoDefaultDocumentSchema):
   is_valid = fields.Boolean(missing=False)
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
 
 class AuthLogSchema(MongoDefaultDocumentSchema):
   user_id = fields.ObjectId()
@@ -96,10 +106,6 @@ class AuthLogSchema(MongoDefaultDocumentSchema):
   event_type = fields.String(validate=validate.OneOf(enum_set(AuthEventTypes)))
   event_details = fields.Dict()
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
-  
-class _ImageSchema(Schema):
-  src = fields.Url(required=True)
-  href = fields.Url(required=False, allow_none=True, missing=None)
 
 class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   task_type = fields.String(validate=validate.OneOf(enum_set(TaskTypes)))
@@ -134,12 +140,25 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   estate_tags = fields.List(fields.String())
-  
+
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   creator_id = fields.ObjectId()
   updater_id = fields.ObjectId()
-
+  def __sort_lists__(self, data):
+    if type(data.get("room_layouts")) is list:
+      data["room_layouts"] = sorted(data["room_layouts"])
+    if type(data.get("estate_tags")) is list:
+      data["estate_tags"] = sorted(
+        [elem.strip() for elem in data["estate_tags"] if elem and elem.strip()]
+      )
+    return data
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    return self.__sort_lists__(data)
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    return self.__sort_lists__(data)
 
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
   estate_info_id = fields.ObjectId()
@@ -158,6 +177,16 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   creator_id = fields.ObjectId()
   updater_id = fields.ObjectId()
   insert_task_id = fields.ObjectId()
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
 
 class DistrictInfoSchema(Schema):
   l1_district = fields.String(allow_none=True, missing=None)

@@ -45,7 +45,6 @@ class UserService():
   
   def update_profile_by_user_id(self, target_user_id, update_dto, run_user_id=None):
     if update_dto.get("email"):
-      update_dto["email"] = update_dto["email"].lower()
       credential_existed = self.collection.find_one(
         { "email": update_dto["email"], "_id": { "ne": target_user_id } },
         { "_id": 1 },
@@ -93,7 +92,6 @@ class UserService():
     return target_user
   
   def login(self, credential_dto):
-    credential_dto["email"] = credential_dto["email"].lower()
     auth_target = self.collection.find_one({"email": credential_dto["email"]})
     if not auth_target:
       raise werkzeug.exceptions.Forbidden("wrong credential")
@@ -116,7 +114,6 @@ class UserService():
 
   def register(self, credential_dto):
     # check create admin logic
-    credential_dto["email"] = credential_dto["email"].lower()
     create_admin_flag = False
     if not self.collection.find_one({}):
       create_admin_flag = True
@@ -201,7 +198,6 @@ class UserService():
     return
 
   def admin_create_user(self, run_user_id, create_dto, send_email=True):
-    create_dto["email"] = create_dto["email"].lower()
     credential_existed = self.collection.find_one(
       { "email": create_dto["email"] },
     )
@@ -233,8 +229,7 @@ class UserService():
     return { "_id": str(new_id) }
 
   def request_password_reset_email(self, reset_dto):
-    email = reset_dto["email"].lower()
-    self.send_password_reset_email(email=email)
+    self.send_password_reset_email(email=reset_dto["email"])
     return
 
   def reset_password_with_event_id(self, event_id, reset_dto):

@@ -3,7 +3,7 @@ from api_backend.schemas import (
   UserSchema,
   ObjectIdHelper,
 )
-from marshmallow import EXCLUDE, fields, Schema, validate
+from marshmallow import EXCLUDE, fields, Schema, post_dump, post_load, validate
 
 try:
   fields.ObjectId
@@ -20,11 +20,31 @@ class CreateUserDto(Schema):
   is_admin = fields.Boolean(missing=False)
   class Meta:
     unknown = EXCLUDE
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
 
 class RequestResetPasswordDto(Schema):
   email = fields.Email(allow_none=False, required=True)
   class Meta:
     unknown = EXCLUDE
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
 
 class UpdatePasswordDto(Schema):
   new_password = fields.String(required=True)
@@ -44,6 +64,16 @@ class UpdateUserDto(Schema):
   description = fields.String()
   class Meta:
     unknown = EXCLUDE
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
 
 class UpdateUserPermissionDto(Schema):
   permissions = fields.Nested(UserPermissionSchema)
@@ -61,6 +91,16 @@ class CredentialDto(Schema):
   password = fields.String(required=True)
   class Meta:
     unknown = EXCLUDE
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    return data
 
 class LoginTokenDto(Schema):
   access_token = fields.String()

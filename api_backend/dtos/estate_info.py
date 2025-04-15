@@ -13,8 +13,8 @@ class UpsertEstateInfoDto(Schema):
   name = fields.String(required=True)
   construction_company = fields.String(missing="")
   address = fields.String(missing="")
-  l1_district = fields.String(allow_none=True, missing=None, metadata={"example": "台南市"})
-  l2_district = fields.String(allow_none=True, missing=None, metadata={"example": "東區"})
+  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "台南市" })
+  l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   estate_tags = fields.List(fields.String())
@@ -29,6 +29,7 @@ class QueryEstateInfoDto(GeneralPagedQueryDto):
   #   { "l1_district": "台北市" },
   # ]
   districts = fields.List(fields.Nested(DistrictInfoSchema))
+  room_size = fields.Nested(RoomSizeSchema())
   estate_tags = fields.List(fields.String())
   class Meta:
     unknown = EXCLUDE

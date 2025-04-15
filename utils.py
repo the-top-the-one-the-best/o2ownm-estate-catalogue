@@ -9,13 +9,6 @@ from bson import ObjectId
 from flask_jwt_extended import get_jwt, jwt_required
 from api_backend.schemas import UserPermissionSchema
 
-# string functions
-def clean_tag(s: str):
-  return ''.join(s.split())
-
-def clean_tags(l):
-  return [clean_tag(elem) for elem in l if elem and clean_tag(elem)]
-
 # RNG
 def generate_salt_string(random_length=24):
   return base64.b64encode(''.join(
