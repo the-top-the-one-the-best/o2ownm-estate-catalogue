@@ -8,7 +8,7 @@ import werkzeug.exceptions
 from config import Config
 from PIL import Image
 from datetime import datetime
-from task_function.process_member_xlsx import process_task
+from task_function.scheduler_tasks import process_task
 from utils import get_file_sha1
 
 class FileOpsService():
