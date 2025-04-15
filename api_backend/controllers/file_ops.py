@@ -1,7 +1,7 @@
 import flask
 import werkzeug.exceptions
 from flask_apispec import doc, marshal_with, use_kwargs
-from api_backend.dtos.file_ops import ImageUploadDto, ImageUploadQueryDto, ImageUploadResultDto, MemberXlsxUploadDto
+from api_backend.dtos.file_ops import ImageUploadDto, ImageUploadQueryDto, ImageUploadResultDto, XlsxUploadDto
 from api_backend.schemas import SchedulerTaskSchema
 from api_backend.services.file_ops import FileOpsService
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -43,7 +43,7 @@ def upload_image(preferred_max_size=None, **kwargs):
   tags=[APITags.file_ops],
   security=[Config.JWT_SECURITY_OPTION],
 )
-@use_kwargs(MemberXlsxUploadDto, location="files")
+@use_kwargs(XlsxUploadDto, location="files")
 @marshal_with(SchedulerTaskSchema)
 def upload_membership_xlsx(**kwargs):
   user_id = get_jwt_identity()

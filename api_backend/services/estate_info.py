@@ -34,14 +34,13 @@ class EstateInfoService():
       if query_dto["room_size"].get("size_min"):
         size_query["size_min"] = { "$gte": query_dto["room_size"]["size_min"] }
       match_filter["room_sizes"] = { "$elemMatch": size_query }
-
     if type(query_dto.get("districts")) is list and query_dto["districts"]:
       match_filter["$or"] = [
         get_district_query(pairs) for pairs in query_dto["districts"]
       ]
 
-    page_size = query_dto.get("page_size") or 20
-    page_number = query_dto.get("page_number") or 1
+    page_size = query_dto.get("page_size")
+    page_number = query_dto.get("page_number")
     agg_stages = []
     if match_filter:
       agg_stages.append({"$match": match_filter})
@@ -49,7 +48,7 @@ class EstateInfoService():
     agg_stages.append({"$skip": page_size * (page_number - 1)})
     agg_stages.append({"$limit": page_size + 1})
     results = list(self.collection.aggregate(agg_stages))
-    return results[:page_size], len(results) > page_size
+    return results[:page_size], bool(len(results) > page_size)
 
   def find_by_id(self, _id):
     result = self.collection.find_one({"_id": _id})

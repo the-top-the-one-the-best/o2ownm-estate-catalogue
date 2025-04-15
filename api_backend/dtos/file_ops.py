@@ -12,5 +12,5 @@ class ImageUploadDto(Schema):
 class ImageUploadQueryDto(Schema):
   preferred_max_size = fields.Int(missing=2048, validate=[Range(min=1, max=4096, error="Value must be in [1, 4096]")])
 
-class MemberXlsxUploadDto(Schema):
+class XlsxUploadDto(Schema):
   xlsx = fields.Raw(required=True, type="file")

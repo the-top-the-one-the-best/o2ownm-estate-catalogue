@@ -46,6 +46,7 @@ def get_by_id(_id):
 @use_kwargs(QueryEstateInfoDto)
 @marshal_with(PagedEstateInfoDto)
 def query(**query):
+  print(query)
   result = estate_info_service.query_by_filter(query)
   return flask.jsonify(PagedEstateInfoDto().dump(result))
 

@@ -3,8 +3,6 @@ import os
 import pytz
 import openpyxl
 import traceback
-import jieba
-import urllib.request
 from datetime import datetime
 from constants import TaskStates, TaskTypes, enum_set, CUSTOMER_XLSX_HEADER_MAP
 from config import Config
@@ -30,7 +28,7 @@ def process_task(task_id, max_retrial=5):
       if task['task_type'] == TaskTypes.import_customer_xlsx:
         params = task['params']
         file_path = params['fs_path']
-        result = process_member_xlsx(file_path, mongo_client=mongo_client)
+        result = process_customer_xlsx(file_path, mongo_client=mongo_client)
         break
       else:
         raise ValueError('task_type should be one of %s' % enum_set(TaskTypes))
@@ -58,17 +56,7 @@ def process_task(task_id, max_retrial=5):
     }
   )
 
-def process_member_xlsx(file_path, mongo_client=None):
-  zh_dict_path = './jieba.big'
-  if not os.path.isfile(zh_dict_path):
-    try:
-      url = Config.LANGUAGE_DICT_URL
-      urllib.request.urlretrieve(url, zh_dict_path)
-    except:
-      print ('failed to download dict from', Config.LANGUAGE_DICT_URL)
-  if os.path.isfile(zh_dict_path):
-    jieba.set_dictionary(zh_dict_path)
-  
+def process_customer_xlsx(file_path, mongo_client=None):
   if not mongo_client:
     mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)    
 
@@ -114,8 +102,6 @@ def process_member_xlsx(file_path, mongo_client=None):
         data[field_name] = str(value).strip() if value else ""
         text_fields_set.append(data[field_name])
 
-    tokens = list(jieba.cut(' '.join(t for t in text_fields_set if t.strip())))
-    data['__tokens__'] = [t for t in tokens if t.strip()]
     data_list.append(data)
 
   # Insert into MongoDB

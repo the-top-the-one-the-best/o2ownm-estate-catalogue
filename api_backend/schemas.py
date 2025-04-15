@@ -145,20 +145,20 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   creator_id = fields.ObjectId()
   updater_id = fields.ObjectId()
-  def __sort_lists__(self, data):
+  def __arrange_data__(self, data):
     if type(data.get("room_layouts")) is list:
       data["room_layouts"] = sorted(data["room_layouts"])
     if type(data.get("estate_tags")) is list:
-      data["estate_tags"] = sorted(
-        [elem.strip() for elem in data["estate_tags"] if elem and elem.strip()]
-      )
+      data["estate_tags"] = sorted([
+        elem.strip() for elem in data["estate_tags"] if elem and elem.strip()
+      ])
     return data
   @post_load
   def post_load_handler(self, data, **kwargs):
-    return self.__sort_lists__(data)
+    return self.__arrange_data__(data)
   @post_dump
   def post_dump_handler(self, data, **kwargs):
-    return self.__sort_lists__(data)
+    return self.__arrange_data__(data)
 
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
   estate_info_id = fields.ObjectId()
@@ -177,16 +177,22 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   creator_id = fields.ObjectId()
   updater_id = fields.ObjectId()
   insert_task_id = fields.ObjectId()
+  def __arrange_data__(self, data):
+    if type(data.get("email")) is str:
+      data["email"] = data["email"].strip().lower()
+    if type(data.get("room_layouts")) is list:
+      data["room_layouts"] = sorted(data["room_layouts"])
+    if type(data.get("customer_tags")) is list:
+      data["customer_tags"] = sorted(
+        [elem.strip() for elem in data["customer_tags"] if elem and elem.strip()]
+      )
+    return data
   @post_load
   def post_load_handler(self, data, **kwargs):
-    if type(data.get("email")) is str:
-      data["email"] = data["email"].strip().lower()
-    return data
+    return self.__arrange_data__(data)
   @post_dump
   def post_dump_handler(self, data, **kwargs):
-    if type(data.get("email")) is str:
-      data["email"] = data["email"].strip().lower()
-    return data
+    return self.__arrange_data__(data)
 
 class DistrictInfoSchema(Schema):
   l1_district = fields.String(allow_none=True, missing=None)

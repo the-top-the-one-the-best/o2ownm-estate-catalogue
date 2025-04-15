@@ -1,4 +1,4 @@
-from marshmallow import EXCLUDE, fields, Schema, validate
+from marshmallow import EXCLUDE, fields, Schema, post_dump, post_load, validate
 from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
 from api_backend.schemas import DistrictInfoSchema, EstateInfoSchema, ObjectIdHelper, RoomSizeSchema
 from marshmallow.validate import Range
@@ -18,7 +18,27 @@ class UpsertEstateInfoDto(Schema):
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   estate_tags = fields.List(fields.String())
-
+  class Meta:
+    unknown = EXCLUDE
+  def __arrange_data__(self, data):
+    if type(data.get("name")) is str:
+      data["name"] = data["name"].strip()
+    if type(data.get("construction_company")) is str:
+      data["construction_company"] = data["construction_company"].strip()
+    if type(data.get("address")) is str:
+      data["room_layouts"] = sorted(data["room_layouts"])
+    if type(data.get("estate_tags")) is list:
+      data["estate_tags"] = sorted([
+        elem.strip() for elem in data["estate_tags"] if elem and elem.strip()
+      ])
+    return data
+  @post_load
+  def post_load_handler(self, data, **kwargs):
+    return self.__arrange_data__(data)
+  @post_dump
+  def post_dump_handler(self, data, **kwargs):
+    return self.__arrange_data__(data)
+  
 class QueryEstateInfoDto(GeneralPagedQueryDto):
   _ids = fields.List(fields.ObjectId)
   name = fields.String()
