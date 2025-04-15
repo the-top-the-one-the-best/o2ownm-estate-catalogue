@@ -1,15 +1,14 @@
 from marshmallow import EXCLUDE, fields, Schema, post_load
 from marshmallow.validate import Length
 from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
-from api_backend.schemas import EstateTagSchema
-
-class QueryEstateTagDto(GeneralPagedQueryDto):
+from api_backend.schemas import CustomerTagSchema
+class QueryCustomerTagDto(GeneralPagedQueryDto):
   name = fields.String()
   is_frequently_used = fields.Boolean()
   class Meta:
     unknown = EXCLUDE
     
-class UpsertEstateTagDto(Schema):
+class UpsertCustomerTagDto(Schema):
   name = fields.String(validate=Length(min=1, max=12))
   description = fields.String(missing="")
   is_frequently_used = fields.Boolean(missing=False)
@@ -24,4 +23,4 @@ class UpsertEstateTagDto(Schema):
       data["description"] = data["description"].strip()
     return data
 
-PagedEstateTagDto = create_page_result_dto(EstateTagSchema)
+PagedCustomerTagDto = create_page_result_dto(CustomerTagSchema)

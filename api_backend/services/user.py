@@ -10,6 +10,8 @@ from api_backend.dtos.user import UpdateUserPermissionDto
 from api_backend.schemas import UserPermissionSchema, UserSchema
 from api_backend.services.email_notification import EmailService
 from api_backend.services.log import LogService
+from api_backend.utils.auth_utils import generate_salt_string
+from api_backend.utils.mongo_helpers import build_mongo_index
 from config import Config
 from passlib.hash import pbkdf2_sha256
 from constants import DataTargets, AuthEventTypes, Permission
@@ -17,9 +19,9 @@ from flask_jwt_extended import (
   create_access_token,
   create_refresh_token, 
 )
-from utils import generate_salt_string
 
 class UserService():
+  __loaded__ = False
   def __init__(
     self,
     mongo_client=pymongo.MongoClient(Config.MONGO_MAIN_URI),
@@ -31,6 +33,10 @@ class UserService():
     self.blacklist_jti_collection = self.db.blacklistjtis
     self.mail_svc = EmailService()
     self.log_svc = LogService()
+    if not UserService.__loaded__:
+      UserService.__loaded__ = True
+      for index in (UserSchema.MongoMeta.index_list):
+        build_mongo_index(self.collection, index)
   
   # controller functions
   def get_profiles(self):
@@ -197,15 +203,15 @@ class UserService():
       self.log_svc.log_auth_events(run_user_id, AuthEventTypes.validate_email)
     return
 
-  def admin_create_user(self, run_user_id, create_dto, send_email=True):
+  def admin_create_user(self, run_user_id, dto, send_email=True):
     credential_existed = self.collection.find_one(
-      { "email": create_dto["email"] },
+      { "email": dto["email"] },
     )
     if credential_existed:
       raise werkzeug.exceptions.Conflict("email already registered")
     
     salt = generate_salt_string()
-    new_user = UserSchema().load(create_dto)
+    new_user = UserSchema().load(dto)
     new_user.update(self.get_permissions_from_user_or_token(new_user))
     new_user.update(
       password = pbkdf2_sha256.hash(salt),
@@ -218,7 +224,7 @@ class UserService():
       event_type=AuthEventTypes.admin_create_user,
       target_id=new_id,
       target_type=DataTargets.user,
-      new_data=create_dto,
+      new_data=dto,
     )
     if send_email:
       self.send_password_reset_email(

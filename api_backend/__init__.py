@@ -60,6 +60,7 @@ def make_app(config, for_manage) -> Flask:
   app.register_blueprint(controllers.estate_info.blueprint, url_prefix=f"{url_prefix}estate_info")
   app.register_blueprint(controllers.estate_tags.blueprint, url_prefix=f"{url_prefix}estate_tags")
   app.register_blueprint(controllers.customer_info.blueprint, url_prefix=f"{url_prefix}customer_info")
+  app.register_blueprint(controllers.customer_tags.blueprint, url_prefix=f"{url_prefix}customer_tags")
   app.register_blueprint(controllers.file_ops.blueprint, url_prefix=f"{url_prefix}files")
   app.register_blueprint(controllers.resources.blueprint, url_prefix=f"{url_prefix}resources")
   

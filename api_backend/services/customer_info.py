@@ -2,10 +2,12 @@ from datetime import datetime
 import pymongo
 import pytz
 import werkzeug.exceptions
+from api_backend.schemas import CustomerInfoSchema
+from api_backend.utils.mongo_helpers import build_mongo_index, get_district_query
 from config import Config
-from utils import get_district_query
 
 class CustomerInfoService():
+  __loaded__ = False
   def __init__(
     self,
     mongo_client=pymongo.MongoClient(Config.MONGO_MAIN_URI),
@@ -13,7 +15,10 @@ class CustomerInfoService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.customerinfos
-    return
+    if not CustomerInfoService.__loaded__:
+      CustomerInfoService.__loaded__ = True
+      for index in (CustomerInfoSchema.MongoMeta.index_list):
+        build_mongo_index(self.collection, index)
 
   def __query_by_filter__(self, query_dto):
     match_filter = {}

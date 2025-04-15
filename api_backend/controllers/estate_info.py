@@ -8,9 +8,10 @@ from api_backend.dtos.estate_info import (
   PublicEstateInfoDto,
 )
 from api_backend.services.estate_info import EstateInfoService
+from api_backend.utils.auth_utils import check_permission
+from api_backend.utils.mongo_helpers import validate_object_id
 from config import Config
 from constants import APITags, Permission, PermissionTargets
-from utils import check_permission, validate_object_id
 
 name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
@@ -46,7 +47,6 @@ def get_by_id(_id):
 @use_kwargs(QueryEstateInfoDto)
 @marshal_with(PagedEstateInfoDto)
 def query(**query):
-  print(query)
   result = estate_info_service.query_by_filter(query)
   return flask.jsonify(PagedEstateInfoDto().dump(result))
 
@@ -64,8 +64,7 @@ def query(**query):
 @marshal_with(PublicEstateInfoDto)
 def create(**kwargs):
   user_id = validate_object_id(get_jwt_identity())
-  create_dto = kwargs
-  created = estate_info_service.create(create_dto, user_id=user_id)
+  created = estate_info_service.create(kwargs, user_id=user_id)
   return flask.jsonify(PublicEstateInfoDto().dump(created))
 
 @blueprint.route("/_id/<_id>", methods=["PATCH"])
@@ -97,6 +96,7 @@ def update_by_id(_id, **kwargs):
 )
 @check_permission(PermissionTargets.estate_customer_info, Permission.write)
 def delete_by_id(_id):
+  _id = validate_object_id(_id)
   user_id = validate_object_id(get_jwt_identity())
-  estate_info_service.delete_by_id(_id, user_id=user_id)
+  estate_info_service.delete_by_id(validate_object_id(_id), user_id=user_id)
   return "", 204

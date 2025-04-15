@@ -1,6 +1,7 @@
 import pytz
 from marshmallow import Schema, ValidationError, fields, post_dump, post_load, validate, missing
 from bson import ObjectId
+from api_backend.utils.mongo_helpers import generate_index_name
 from constants import (
   AuthEventTypes,
   RoomLayouts,
@@ -60,6 +61,7 @@ class TaiwanAdministrativeDistrictSchema(Schema):
 class MongoDefaultDocumentSchema(Schema):
   _id = fields.ObjectId()
 
+    
 class UserPermissionSchema(Schema):
   account = fields.String(default=Permission.full, missing=Permission.full, validate=validate.OneOf(enum_set(Permission)))
   homepage = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
@@ -89,6 +91,10 @@ class UserSchema(MongoDefaultDocumentSchema):
   is_valid = fields.Boolean(missing=False)
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  class MongoMeta:
+    index_list = [
+      { "email": 1, "is_admin": 1, "is_valid": 1, "created_at": 1 }
+    ]
   @post_load
   def post_load_handler(self, data, **kwargs):
     if type(data.get("email")) is str:
@@ -106,6 +112,10 @@ class AuthLogSchema(MongoDefaultDocumentSchema):
   event_type = fields.String(validate=validate.OneOf(enum_set(AuthEventTypes)))
   event_details = fields.Dict()
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  class MongoMeta:
+    index_list = [
+      { "user_id": 1, "target_id": 1, "event_type": 1, "created_at": -1 },
+    ]
 
 class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   task_type = fields.String(validate=validate.OneOf(enum_set(TaskTypes)))
@@ -123,11 +133,15 @@ class EstateTagSchema(MongoDefaultDocumentSchema):
   name = fields.String()
   description = fields.String()
   is_frequently_used = fields.Boolean()
+  class MongoMeta:
+    index_list = [{ "name": 1, "is_frequently_used": 1 }]
 
 class CustomerTagSchema(MongoDefaultDocumentSchema):
   name = fields.String()
   description = fields.String()
   is_frequently_used = fields.Boolean()
+  class MongoMeta:
+    index_list = [{ "name": 1, "is_frequently_used": 1 }]
 
 class RoomSizeSchema(Schema):
   size_min = fields.Float(metadata={"example": 25})
@@ -147,6 +161,12 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   creator_id = fields.ObjectId()
   updater_id = fields.ObjectId()
+  class MongoMeta:
+    index_list = [
+      { "name": 1, "l1_district": 1, "l2_district": 1, "room_layouts": 1, "updated_at": -1 },
+      { "name": 1, "l1_district": 1, "l2_district": 1, "room_sizes.size_min": 1, "updated_at": -1 },
+      { "name": 1, "l1_district": 1, "l2_district": 1, "estate_tags": 1, "updated_at": -1 },
+    ]
   def __arrange_data__(self, data):
     if type(data.get("room_layouts")) is list:
       data["room_layouts"] = sorted(data["room_layouts"])
@@ -177,6 +197,13 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   creator_id = fields.ObjectId()
   updater_id = fields.ObjectId()
   insert_task_id = fields.ObjectId()
+  class MongoMeta:
+    index_list = [
+      { "estate_info_id": 1, "l1_district": 1, "l2_district": 1, "room_layouts": 1, "updated_at": -1 },
+      { "estate_info_id": 1, "l1_district": 1, "l2_district": 1, "room_sizes.size_min": 1, "updated_at": -1 },
+      { "estate_info_id": 1, "l1_district": 1, "l2_district": 1, "customer_tags": 1, "updated_at": -1 },
+      { "insert_task_id": 1 },
+    ]
   def __arrange_data__(self, data):
     if type(data.get("email")) is str:
       data["email"] = data["email"].strip().lower()

@@ -14,8 +14,9 @@ from api_backend.dtos.user import (
   UpdateUserDto,
   UpdateUserPermissionDto,
 )
+from api_backend.utils.auth_utils import admins_only, check_permission
+from api_backend.utils.mongo_helpers import validate_object_id
 from constants import APITags, PermissionTargets, Permission
-from utils import admins_only, check_permission, validate_object_id
 from flask_jwt_extended import decode_token, get_jwt, jwt_required, get_jwt_identity
 from api_backend.services.user import UserService
 from config import Config

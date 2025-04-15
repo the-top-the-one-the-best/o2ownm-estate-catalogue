@@ -9,7 +9,6 @@ from config import Config
 from PIL import Image
 from datetime import datetime
 from task_function.scheduler_tasks import process_task
-from utils import get_file_sha1
 
 class FileOpsService():
   def __init__(
@@ -62,7 +61,6 @@ class FileOpsService():
       trial = 0,
       params = {
         "original_file_name": xlsx_file.filename,
-        "file_hash": get_file_sha1(final_file_path),
         "fs_path": final_file_path,
       },
       messages = '',

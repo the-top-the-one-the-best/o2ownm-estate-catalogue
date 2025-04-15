@@ -3,9 +3,10 @@ from flask_apispec import doc, marshal_with, use_kwargs
 from flask_jwt_extended import get_jwt_identity
 from api_backend.dtos.customer_info import PagedCustomerInfoDto, PublicCustomerInfoDto, QueryCustomerInfoDto, UpsertCustomerInfoDto
 from api_backend.services.customer_info import CustomerInfoService
+from api_backend.utils.auth_utils import check_permission
+from api_backend.utils.mongo_helpers import validate_object_id
 from config import Config
 from constants import APITags, Permission, PermissionTargets
-from utils import check_permission, validate_object_id
 
 name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
@@ -57,7 +58,6 @@ def query(**query):
 @marshal_with(PublicCustomerInfoDto)
 def create(**kwargs):
   user_id = validate_object_id(get_jwt_identity())
-  print(kwargs)
   created = customer_info_service.create(kwargs, user_id=user_id)
   return flask.jsonify(PublicCustomerInfoDto().dump(created))
 
@@ -90,6 +90,7 @@ def update_by_id(_id, **kwargs):
 )
 @check_permission(PermissionTargets.estate_customer_info, Permission.write)
 def delete_by_id(_id):
+  _id = validate_object_id(_id)
   user_id = validate_object_id(get_jwt_identity())
   customer_info_service.delete_by_id(_id, user_id=user_id)
   return "", 204
