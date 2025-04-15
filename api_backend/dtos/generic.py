@@ -30,10 +30,6 @@ def create_page_result_dto(item_schema: Type[Schema]):
 
   return _PageResultDto
 
-# general  
-class GeneralInsertIdDto(MongoDefaultDocumentSchema):
-  _id = fields.String()
-
 class GeneralPagedQueryDto(Schema):
   page_size = fields.Integer(
     missing=20,
@@ -45,4 +41,3 @@ class GeneralPagedQueryDto(Schema):
     validate=[Range(min=1, error="Value must >= 1")],
     metadata={ "example":  1 },
   )
-

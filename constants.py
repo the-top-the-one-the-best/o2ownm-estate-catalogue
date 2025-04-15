@@ -12,6 +12,8 @@ class APITags:
   admin = "管理 API"
   customer_info = "建案客資管理-客戶資料"
   estate_info = "建案客資管理-建案資料"
+  customer_tags = "標籤-客戶標籤"
+  estate_tags = "標籤-建案標籤"
   file_ops = "檔案處裡"
   resources = "資料資源"
   root = "系統 Root"
@@ -57,7 +59,6 @@ class RoomLayouts:
   layout_4 = "4"
   layout_5_or_more = "5"
   
-
 class TaskTypes:
   import_customer_xlsx = "import_customer_xlsx"
   export_customer_xlsx = "export_customer_xlsx"

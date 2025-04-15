@@ -4,4 +4,5 @@ from . import (
   file_ops,
   email_notification,
   estate_info,
+  estate_tags,
 )

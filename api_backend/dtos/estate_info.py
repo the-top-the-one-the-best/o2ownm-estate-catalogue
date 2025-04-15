@@ -17,7 +17,7 @@ class UpsertEstateInfoDto(Schema):
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
-  estate_tags = fields.List(fields.String())
+  estate_tags = fields.List(fields.ObjectId())
   class Meta:
     unknown = EXCLUDE
   def __arrange_data__(self, data):
@@ -28,9 +28,7 @@ class UpsertEstateInfoDto(Schema):
     if type(data.get("address")) is str:
       data["room_layouts"] = sorted(data["room_layouts"])
     if type(data.get("estate_tags")) is list:
-      data["estate_tags"] = sorted([
-        elem.strip() for elem in data["estate_tags"] if elem and elem.strip()
-      ])
+      data["estate_tags"] = sorted(data["estate_tags"])
     return data
   @post_load
   def post_load_handler(self, data, **kwargs):
@@ -50,7 +48,7 @@ class QueryEstateInfoDto(GeneralPagedQueryDto):
   # ]
   districts = fields.List(fields.Nested(DistrictInfoSchema))
   room_size = fields.Nested(RoomSizeSchema())
-  estate_tags = fields.List(fields.String())
+  estate_tags = fields.List(fields.ObjectId())
   class Meta:
     unknown = EXCLUDE
 

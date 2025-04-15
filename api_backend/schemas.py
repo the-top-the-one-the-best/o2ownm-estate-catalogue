@@ -119,13 +119,15 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   finished_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
 
-class EstateTags(Schema):
-  _id = fields.String()
+class EstateTagSchema(MongoDefaultDocumentSchema):
+  name = fields.String()
   description = fields.String()
+  is_frequently_used = fields.Boolean()
 
-class CustomerTags(Schema):
-  _id = fields.String()
+class CustomerTagSchema(MongoDefaultDocumentSchema):
+  name = fields.String()
   description = fields.String()
+  is_frequently_used = fields.Boolean()
 
 class RoomSizeSchema(Schema):
   size_min = fields.Float(metadata={"example": 25})
@@ -139,7 +141,7 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   l2_district = fields.String(allow_none=True, missing=None)
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
-  estate_tags = fields.List(fields.String())
+  estate_tags = fields.List(fields.ObjectId())
 
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
@@ -149,9 +151,7 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
     if type(data.get("room_layouts")) is list:
       data["room_layouts"] = sorted(data["room_layouts"])
     if type(data.get("estate_tags")) is list:
-      data["estate_tags"] = sorted([
-        elem.strip() for elem in data["estate_tags"] if elem and elem.strip()
-      ])
+      data["estate_tags"] = sorted(data["estate_tags"])
     return data
   @post_load
   def post_load_handler(self, data, **kwargs):
@@ -170,7 +170,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   l1_district = fields.String(allow_none=True, missing=None)
   l2_district = fields.String(allow_none=True, missing=None)
-  customer_tags = fields.List(fields.String())
+  customer_tags = fields.List(fields.ObjectId())
 
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
@@ -183,9 +183,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
     if type(data.get("room_layouts")) is list:
       data["room_layouts"] = sorted(data["room_layouts"])
     if type(data.get("customer_tags")) is list:
-      data["customer_tags"] = sorted(
-        [elem.strip() for elem in data["customer_tags"] if elem and elem.strip()]
-      )
+      data["customer_tags"] = sorted(data["customer_tags"])
     return data
   @post_load
   def post_load_handler(self, data, **kwargs):
