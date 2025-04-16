@@ -17,7 +17,7 @@ class GeneralInsertIdDto(MongoDefaultDocumentSchema):
 from typing import TypeVar, Type
 T = TypeVar("T", bound=Schema)
 def create_page_result_dto(item_schema: Type[Schema]):
-  class _PageResultDto(Schema):
+  class PageResultDto(Schema):
     results = fields.List(fields.Nested(item_schema))
     page_size = fields.Integer()
     page_number = fields.Integer()
@@ -28,7 +28,9 @@ def create_page_result_dto(item_schema: Type[Schema]):
     class Meta:
       unknown = EXCLUDE
 
-  return _PageResultDto
+  PageResultDto.__name__ = PageResultDto.__name__ + "<" + item_schema.__name__ + ">"
+  print (PageResultDto.__name__)
+  return PageResultDto
 
 class GeneralPagedQueryDto(Schema):
   page_size = fields.Integer(
