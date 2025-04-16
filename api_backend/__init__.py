@@ -64,6 +64,7 @@ def make_app(config, for_manage) -> Flask:
   app.register_blueprint(controllers.customer_tags.blueprint, url_prefix=f"{url_prefix}customer_tags")
   app.register_blueprint(controllers.file_ops.blueprint, url_prefix=f"{url_prefix}files")
   app.register_blueprint(controllers.resources.blueprint, url_prefix=f"{url_prefix}resources")
+  app.register_blueprint(controllers.system_log.blueprint, url_prefix=f"{url_prefix}system_logs")
   
   # for swagger
   docs = FlaskApiSpec(app)

@@ -23,7 +23,7 @@ user_role_service = UserRoleService()
     PermissionTargets.user_role_mgmt,
     Permission.read,
   ),
-  tags=[APITags.user_role_mgmt],
+  tags=[APITags.user_role_mgmt, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @check_permission(PermissionTargets.user_role_mgmt, Permission.read)
@@ -39,10 +39,9 @@ def get_by_id(_id):
     PermissionTargets.user_role_mgmt,
     Permission.read,
   ),
-  tags=[APITags.user_role_mgmt],
+  tags=[APITags.user_role_mgmt, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION],
 )
-@jwt_required()
 @check_permission(PermissionTargets.user_role_mgmt, Permission.read)
 @use_kwargs(QueryUserRoleDto)
 @marshal_with(PagedUserRoleDto)
@@ -56,7 +55,7 @@ def query(**query):
     PermissionTargets.user_role_mgmt,
     Permission.write,
   ),
-  tags=[APITags.user_role_mgmt],
+  tags=[APITags.user_role_mgmt, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @check_permission(PermissionTargets.user_role_mgmt, Permission.write)
@@ -73,7 +72,7 @@ def create(**kwargs):
     PermissionTargets.user_role_mgmt,
     Permission.write,
   ),
-  tags=[APITags.user_role_mgmt],
+  tags=[APITags.user_role_mgmt, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @check_permission(PermissionTargets.user_role_mgmt, Permission.write)
@@ -91,7 +90,7 @@ def update_by_id(_id, **kwargs):
     PermissionTargets.user_role_mgmt,
     Permission.write,
   ),
-  tags=[APITags.user_role_mgmt],
+  tags=[APITags.user_role_mgmt, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION],
 )
 @check_permission(PermissionTargets.user_role_mgmt, Permission.write)

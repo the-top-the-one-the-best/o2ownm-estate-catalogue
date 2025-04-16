@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from api_backend.dtos.user import UpdateUserPermissionDto
 from api_backend.schemas import UserPermissionSchema, UserSchema
 from api_backend.services.email_notification import EmailService
-from api_backend.services.log import LogService
+from api_backend.services.system_log import SystemLogService
 from api_backend.utils.auth_utils import generate_salt_string
 from api_backend.utils.mongo_helpers import build_mongo_index
 from config import Config
@@ -32,7 +32,7 @@ class UserService():
     self.chpwd_request_collection = self.db.passwordresetrequests
     self.blacklist_jti_collection = self.db.blacklistjtis
     self.mail_svc = EmailService()
-    self.log_svc = LogService()
+    self.log_svc = SystemLogService()
     if not UserService.__loaded__:
       UserService.__loaded__ = True
       for index in (UserSchema.MongoMeta.index_list):
@@ -97,7 +97,7 @@ class UserService():
       event_type=AuthEventTypes.change_profile,
       target_id=target_user_id,
       target_type=DataTargets.user,
-      new_data=update_dto,
+      event_data=update_dto,
     )
     return updated
   
@@ -120,7 +120,7 @@ class UserService():
       event_type=AuthEventTypes.change_permission,
       target_id=target_user_id,
       target_type=DataTargets.user,
-      new_data=update_dto,
+      event_data=update_dto,
     )
     return target_user
   
@@ -173,7 +173,7 @@ class UserService():
       event_type=AuthEventTypes.register,
       target_id=new_id,
       target_type=DataTargets.user,
-      new_data={"email": credential_dto["email"]},
+      event_data={"email": credential_dto["email"]},
     )
     return { "_id": str(new_id) }
   
@@ -251,7 +251,7 @@ class UserService():
       event_type=AuthEventTypes.admin_create_user,
       target_id=new_id,
       target_type=DataTargets.user,
-      new_data=dto,
+      event_data=dto,
     )
     if send_email:
       self.send_password_reset_email(

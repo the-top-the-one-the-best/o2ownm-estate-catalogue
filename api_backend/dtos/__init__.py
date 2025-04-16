@@ -5,6 +5,7 @@ from . import (
   estate_tags,
   file_ops,
   generic,
+  system_log,
   user,
   user_role,
 )

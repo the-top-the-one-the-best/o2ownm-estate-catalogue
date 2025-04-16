@@ -6,6 +6,7 @@ from . import (
   file_ops,
   resources,
   root,
+  system_log,
   user,
   user_role,
 )

@@ -43,7 +43,6 @@ def get_by_id(_id):
   tags=[APITags.estate_tags],
   security=[Config.JWT_SECURITY_OPTION],
 )
-@jwt_required()
 @check_permission(PermissionTargets.estate_customer_tag, Permission.read)
 @use_kwargs(QueryEstateTagDto)
 @marshal_with(PagedEstateTagDto)

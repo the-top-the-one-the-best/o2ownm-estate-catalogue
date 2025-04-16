@@ -18,6 +18,7 @@ class APITags:
   file_ops = "檔案處裡"
   resources = "資料資源"
   root = "系統 Root"
+  system_log = "系統 Log"
   user = "帳戶"
 
 class AuthEventTypes:
@@ -32,6 +33,11 @@ class AuthEventTypes:
   register = "register"
   request_reset_password = "request_reset_password"
   validate_email = "validate_email"
+
+  query_data = "read_data"
+  update_data = "update_data"
+  create_data = "create_data"
+  delete_data = "create_data"
 
 class DataTargets:
   user = "user"

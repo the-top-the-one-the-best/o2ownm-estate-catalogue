@@ -4,6 +4,7 @@ from bson import ObjectId
 from api_backend.utils.mongo_helpers import generate_index_name
 from constants import (
   AuthEventTypes,
+  DataTargets,
   RoomLayouts,
   TaskStates,
   TaskTypes,
@@ -141,15 +142,16 @@ class UserSchema(MongoDefaultDocumentSchema):
       data["email"] = data["email"].strip().lower()
     return data
 
-class AuthLogSchema(MongoDefaultDocumentSchema):
+class SystemLogSchema(MongoDefaultDocumentSchema):
   user_id = fields.ObjectId()
   target_id = fields.ObjectId()
+  target_type = fields.String(validate=validate.OneOf(enum_set(DataTargets)))
   event_type = fields.String(validate=validate.OneOf(enum_set(AuthEventTypes)))
   event_details = fields.Dict()
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   class MongoMeta:
     index_list = [
-      { "user_id": 1, "target_id": 1, "event_type": 1, "created_at": -1 },
+      { "user_id": 1, "target_id": 1, "event_type": 1, "target_type": 1, "created_at": -1 },
     ]
 
 class SchedulerTaskSchema(MongoDefaultDocumentSchema):
