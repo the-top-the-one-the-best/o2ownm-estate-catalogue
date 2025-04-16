@@ -38,10 +38,10 @@ def get_by_id(_id):
     PermissionTargets.system_log,
     Permission.read,
   ),
-  # tags=[APITags.system_log],
+  tags=[APITags.system_log],
   security=[Config.JWT_SECURITY_OPTION],
 )
-# @check_permission(PermissionTargets.system_log, Permission.read)
+@check_permission(PermissionTargets.system_log, Permission.read)
 @use_kwargs(QuerySystemLogDto)
 @marshal_with(PagedSystemLogDto)
 def query(**query):
