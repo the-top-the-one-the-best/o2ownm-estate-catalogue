@@ -38,10 +38,31 @@ class UserService():
       for index in (UserSchema.MongoMeta.index_list):
         build_mongo_index(self.collection, index)
   
+  def __query_by_filter__(self, query_dto):
+    match_filter = {}
+    page_size = query_dto.get("page_size")
+    page_number = query_dto.get("page_number")
+    agg_stages = []
+    if match_filter:
+      agg_stages.append({"$match": match_filter})
+    agg_stages.append({"$sort": {"is_admin": -1, "is_valid": -1, "_id": 1}})
+    agg_stages.append({"$skip": page_size * (page_number - 1)})
+    agg_stages.append({"$limit": page_size + 1})
+    results = list(self.collection.aggregate(agg_stages))
+    for result in results:
+      result.update(self.get_permissions_from_user_or_token(result))
+    return results[:page_size], bool(len(results) > page_size)
+  
   # controller functions
-  def get_profiles(self):
-    targets = self.collection.find({})
-    return list(targets)
+  def get_profiles(self, query_dto):
+    paged_result, has_more = self.__query_by_filter__(query_dto)
+    result = {
+      "results": paged_result,
+      "has_more": has_more,
+      "page_size": query_dto.get("page_size"),
+      "page_number": query_dto.get("page_number"),
+    }
+    return result
 
   def get_profile_by_user_id(self, target_user_id):
     target = self.collection.find_one({ "_id": target_user_id })

@@ -1,11 +1,12 @@
 import flask
 import werkzeug.exceptions
 from flask_apispec import doc, marshal_with, use_kwargs
-from api_backend.dtos.generic import GeneralInsertIdDto
+from api_backend.dtos.generic import GeneralInsertIdDto, GeneralPagedQueryDto
 from api_backend.dtos.user import (
   CreateUserDto,
   CredentialDto,
   LoginTokenDto,
+  PagedPublicUserDto,
   PublicUserDto,
   RefreshAccessTokenDto,
   RequestResetPasswordDto,
@@ -96,17 +97,18 @@ def update_my_profile(**kwargs):
     )
   )
 
-@blueprint.route("/profile/query", methods=["GET"])
-@check_permission(PermissionTargets.user_mgmt, Permission.read)
+@blueprint.route("/profile/query", methods=["POST"])
+# @check_permission(PermissionTargets.user_mgmt, Permission.read)
 @doc(
   summary='query users, permission <%s:%s> required' % (PermissionTargets.user_mgmt, Permission.read),
   tags=[APITags.user, APITags.admin],
-  security=[Config.JWT_SECURITY_OPTION]
+  # security=[Config.JWT_SECURITY_OPTION]
 )
-@marshal_with(PublicUserDto(many=True))
-def get_users():
+@use_kwargs(GeneralPagedQueryDto)
+@marshal_with(PagedPublicUserDto)
+def get_users(**kwargs):
   return flask.jsonify(
-    PublicUserDto(many=True).dump(user_service.get_profiles())
+    PagedPublicUserDto().dump(user_service.get_profiles(kwargs))
   )
 
 @blueprint.route("/profile/_id/<user_id>", methods=["GET"])

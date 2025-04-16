@@ -1,3 +1,4 @@
+from api_backend.dtos.generic import create_page_result_dto
 from api_backend.schemas import (
   UserPermissionSchema,
   UserSchema,
@@ -85,6 +86,8 @@ class UpdateUserPermissionDto(Schema):
 class PublicUserDto(UserSchema):
   class Meta:
     exclude = ('password',)
+
+PagedPublicUserDto = create_page_result_dto(PublicUserDto)
 
 class CredentialDto(Schema):
   email = fields.Email(required=True)
