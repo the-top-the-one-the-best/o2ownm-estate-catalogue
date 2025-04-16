@@ -29,10 +29,10 @@ def create_page_result_dto(item_schema: Type[Schema]):
       unknown = EXCLUDE
 
   PageResultDto.__name__ = PageResultDto.__name__ + "<" + item_schema.__name__ + ">"
-  print (PageResultDto.__name__)
   return PageResultDto
 
 class GeneralPagedQueryDto(Schema):
+  count_matched = fields.Boolean(missing=False, default=False)
   page_size = fields.Integer(
     missing=20,
     validate=[Range(min=1, max=100, error="Value must be in [1, 100]")],

@@ -40,10 +40,9 @@ def get_by_id(_id):
     Permission.read,
   ),
   tags=[APITags.estate_info],
-  security=[Config.JWT_SECURITY_OPTION],
+  #security=[Config.JWT_SECURITY_OPTION],
 )
-@jwt_required()
-@check_permission(PermissionTargets.estate_customer_info, Permission.read)
+#@check_permission(PermissionTargets.estate_customer_info, Permission.read)
 @use_kwargs(QueryEstateInfoDto)
 @marshal_with(PagedEstateInfoDto)
 def query(**query):

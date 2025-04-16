@@ -43,25 +43,31 @@ class UserService():
     page_size = query_dto.get("page_size")
     page_number = query_dto.get("page_number")
     agg_stages = []
+    matched_count = None
     if match_filter:
       agg_stages.append({"$match": match_filter})
+    # check matched count
+    if bool(query_dto.get("count_matched")):
+      matched_count = self.collection.count_documents(match_filter)
     agg_stages.append({"$sort": {"is_admin": -1, "is_valid": -1, "_id": 1}})
     agg_stages.append({"$skip": page_size * (page_number - 1)})
     agg_stages.append({"$limit": page_size + 1})
     results = list(self.collection.aggregate(agg_stages))
     for result in results:
       result.update(self.get_permissions_from_user_or_token(result))
-    return results[:page_size], bool(len(results) > page_size)
+    return results[:page_size], bool(len(results) > page_size), matched_count
   
   # controller functions
   def query_by_filter(self, query_dto):
-    paged_result, has_more = self.__query_by_filter__(query_dto)
+    paged_result, has_more, matched_count = self.__query_by_filter__(query_dto)
     result = {
       "results": paged_result,
       "has_more": has_more,
       "page_size": query_dto.get("page_size"),
       "page_number": query_dto.get("page_number"),
     }
+    if not matched_count is None:
+      result["matched_count"] = matched_count
     return result
 
   def get_profile_by_user_id(self, target_user_id):
