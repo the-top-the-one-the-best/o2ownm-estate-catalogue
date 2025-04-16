@@ -295,7 +295,7 @@ class UserService():
       for key in _admin_perm:
         _admin_perm[key] = Permission.full
       claim["permissions"] = _admin_perm
-    elif claim["is_valid"] and auth_target.get('permissions'):
+    elif auth_target.get('permissions'):
       claim["permissions"] = UserPermissionSchema().dump(auth_target.get('permissions'))
     else:
       claim["permissions"] = UserPermissionSchema().dump({})
