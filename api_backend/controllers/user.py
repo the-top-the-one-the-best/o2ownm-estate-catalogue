@@ -98,17 +98,17 @@ def update_my_profile(**kwargs):
   )
 
 @blueprint.route("/profile/query", methods=["POST"])
-# @check_permission(PermissionTargets.user_mgmt, Permission.read)
+@check_permission(PermissionTargets.user_mgmt, Permission.read)
 @doc(
   summary='query users, permission <%s:%s> required' % (PermissionTargets.user_mgmt, Permission.read),
   tags=[APITags.user, APITags.admin],
-  # security=[Config.JWT_SECURITY_OPTION]
+  security=[Config.JWT_SECURITY_OPTION]
 )
 @use_kwargs(GeneralPagedQueryDto)
 @marshal_with(PagedPublicUserDto)
 def get_users(**kwargs):
   return flask.jsonify(
-    PagedPublicUserDto().dump(user_service.get_profiles(kwargs))
+    PagedPublicUserDto().dump(user_service.query_by_filter(kwargs))
   )
 
 @blueprint.route("/profile/_id/<user_id>", methods=["GET"])

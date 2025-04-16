@@ -54,7 +54,7 @@ class UserService():
     return results[:page_size], bool(len(results) > page_size)
   
   # controller functions
-  def get_profiles(self, query_dto):
+  def query_by_filter(self, query_dto):
     paged_result, has_more = self.__query_by_filter__(query_dto)
     result = {
       "results": paged_result,
