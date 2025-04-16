@@ -63,13 +63,48 @@ class MongoDefaultDocumentSchema(Schema):
 
     
 class UserPermissionSchema(Schema):
-  account = fields.String(default=Permission.full, missing=Permission.full, validate=validate.OneOf(enum_set(Permission)))
-  homepage = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
-  estate_customer_info = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
-  estate_customer_tag = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
-  user_role_mgmt = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
-  user_mgmt = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
-  system_log = fields.String(default=Permission.none, missing=Permission.none, validate=validate.OneOf(enum_set(Permission)))
+  account = fields.String(
+    default=Permission.full,
+    missing=Permission.full,
+    validate=validate.OneOf(enum_set(Permission)),
+    metadata={ "example": Permission.full },
+  )
+  homepage = fields.String(
+    default=Permission.none, 
+    missing=Permission.none, 
+    validate=validate.OneOf(enum_set(Permission)),
+    metadata={ "example": Permission.read },
+  )
+  estate_customer_info = fields.String(
+    default=Permission.none, 
+    missing=Permission.none, 
+    validate=validate.OneOf(enum_set(Permission)),
+    metadata={ "example": Permission.read },
+  )
+  estate_customer_tag = fields.String(
+    default=Permission.none, 
+    missing=Permission.none, 
+    validate=validate.OneOf(enum_set(Permission)),
+    metadata={ "example": Permission.read },
+  )
+  user_role_mgmt = fields.String(
+    default=Permission.none, 
+    missing=Permission.none, 
+    validate=validate.OneOf(enum_set(Permission)),
+    metadata={ "example": Permission.none },
+  )
+  user_mgmt = fields.String(
+    default=Permission.none, 
+    missing=Permission.none, 
+    validate=validate.OneOf(enum_set(Permission)),
+    metadata={ "example": Permission.none },
+  )
+  system_log = fields.String(
+    default=Permission.none, 
+    missing=Permission.none, 
+    validate=validate.OneOf(enum_set(Permission)),
+    metadata={ "example": Permission.none },
+  )
 
 class PasswordRequestRequestSchema(MongoDefaultDocumentSchema):
   user_id = fields.ObjectId()
@@ -222,3 +257,12 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
 class DistrictInfoSchema(Schema):
   l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "台南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
+
+class UserRoleSchema(MongoDefaultDocumentSchema):
+  name = fields.String()
+  permissions = fields.Nested(UserPermissionSchema)
+  description = fields.String()
+  created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  creator_id = fields.ObjectId()
+  updater_id = fields.ObjectId()

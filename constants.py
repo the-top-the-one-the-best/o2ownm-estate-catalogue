@@ -10,6 +10,7 @@ XLSX_MIME_TYPES = {
 
 class APITags:
   admin = "管理 API"
+  user_role_mgmt = "角色管理"
   customer_info = "建案客資管理-客戶資料"
   estate_info = "建案客資管理-建案資料"
   customer_tags = "標籤-客戶標籤"

@@ -7,4 +7,5 @@ from . import (
   resources,
   root,
   user,
+  user_role,
 )

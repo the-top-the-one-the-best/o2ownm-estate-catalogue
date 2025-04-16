@@ -3,7 +3,8 @@ from . import (
   customer_tags,
   estate_info,
   estate_tags,
-  user,
-  generic,
   file_ops,
+  generic,
+  user,
+  user_role,
 )
