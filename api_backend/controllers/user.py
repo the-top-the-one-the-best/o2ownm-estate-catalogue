@@ -264,3 +264,19 @@ def admin_create_system_account(**kwargs):
       user_service.admin_create_user(validate_object_id(user_id), kwargs)
     )
   )
+
+@blueprint.route("/_id/<_id>", methods=["DELETE"])
+@doc(
+  summary='delete user by _id, permission <%s:%s> required' % (
+    PermissionTargets.user_mgmt,
+    Permission.write,
+  ),
+  tags=[APITags.user, APITags.admin],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@check_permission(PermissionTargets.user_mgmt, Permission.write)
+def delete_by_id(_id):
+  _id = validate_object_id(_id)
+  user_id = validate_object_id(get_jwt_identity())
+  user_service.delete_by_id(_id, user_id=user_id)
+  return "", 204

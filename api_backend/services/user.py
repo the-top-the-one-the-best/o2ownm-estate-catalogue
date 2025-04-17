@@ -300,6 +300,12 @@ class UserService():
     else:
       claim["permissions"] = UserPermissionSchema().dump({})
     return claim
+  
+  def delete_by_id(self, _id, user_id=None):
+    result = self.collection.find_one_and_delete({"_id": _id})
+    if not result:
+      raise werkzeug.exceptions.NotFound
+    return None
 
   def send_password_reset_email(
       self, 
