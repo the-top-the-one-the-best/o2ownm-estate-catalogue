@@ -276,7 +276,7 @@ class UserService():
     salt = reset_dto['salt']
     validate_user = bool(challenge_entry.get('validate_user'))
     if pbkdf2_sha256.verify(salt, challenge_entry['salt_hash']):
-      self.update_password(challenge_entry["user_id"], reset_dto, validate_user)
+      self.update_password(challenge_entry["user_id"], reset_dto, validate_user=validate_user)
       self.chpwd_request_collection.update_one(
         {"_id": event_id},
         {'$set': {'fulfilled': True}},
