@@ -48,13 +48,14 @@ class RequestResetPasswordDto(Schema):
     return data
 
 class UpdatePasswordDto(Schema):
-  new_password = fields.String(required=True)
   old_password = fields.String()
+  new_password = fields.String(required=True)
   class Meta:
     unknown = EXCLUDE
 
-class ResetPasswordDto(UpdatePasswordDto):
+class ResetPasswordDto(Schema):
   salt = fields.String(required=True)
+  new_password = fields.String(required=True)
   class Meta:
     unknown = EXCLUDE
 
