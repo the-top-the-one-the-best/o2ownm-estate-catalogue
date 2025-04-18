@@ -47,6 +47,7 @@ def login(**kwargs):
 @use_kwargs(CredentialDto)
 @marshal_with(GeneralInsertIdDto)
 def register(**kwargs):
+  raise werkzeug.exceptions.Locked("API disabled intentionally")
   credential_dto = kwargs
   return flask.jsonify(
     GeneralInsertIdDto().dump(user_service.register(credential_dto))
