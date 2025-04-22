@@ -76,4 +76,4 @@ def build_mongo_index(collection, index_descriptor):
     for field, order in index_descriptor.items()
   ]
   collection.create_index(index_fields, name=index_name)
-  print("Index '%s' created." % index_name)
+  print("Index '%s.%s' created." % (collection.name, index_name))

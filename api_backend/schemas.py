@@ -1,5 +1,5 @@
 import pytz
-from marshmallow import Schema, ValidationError, fields, post_dump, post_load, validate, missing
+from marshmallow import Schema, ValidationError, fields, post_dump, post_load, pre_dump, validate, missing
 from bson import ObjectId
 from api_backend.utils.mongo_helpers import generate_index_name
 from constants import (
@@ -14,7 +14,6 @@ from constants import (
 
 # helper class for ObjectId conversion
 class ObjectIdHelper(fields.String):
-  metadata = { "example": "0" * 24 }
   def __init__(self, *args, **kwargs):
     kwargs.setdefault("metadata", {})
     kwargs["metadata"].setdefault("example", "661ccc3d378a65e30fb784ea")
@@ -165,6 +164,12 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   finished_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  @pre_dump
+  def pre_dump_handler(self, data, **kwargs):
+    for k, v in (data.get('params') or {}).items():
+      if type(v) is ObjectId:
+        data['params'][k] = str(v)
+    return data
 
 class EstateTagSchema(MongoDefaultDocumentSchema):
   name = fields.String()

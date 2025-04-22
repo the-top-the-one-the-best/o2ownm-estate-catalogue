@@ -1,16 +1,16 @@
 import multiprocessing
 import pymongo
 import pytz
+from api_backend.services.estate_info import EstateInfoService
 import constants
 import os
 import bson
 import werkzeug.exceptions
 from config import Config
-from PIL import Image
 from datetime import datetime
 from task_function.scheduler_tasks import process_task
 
-class FileOpsService():
+class BackgroundTaskService():
   def __init__(
       self,
       mongo_client=pymongo.MongoClient(Config.MONGO_MAIN_URI),
@@ -20,7 +20,8 @@ class FileOpsService():
     self.url_pfx = Config.FS_RETURN_UPLOAD_URL_PFX
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
-    self.task_col = self.db.schedulertasks
+    self.collection = self.db.bgtasks
+    self.estate_service = EstateInfoService()
     os.makedirs(self.upload_path, exist_ok=True)
     return
   
@@ -37,7 +38,7 @@ class FileOpsService():
       except:
         return
   
-  def upload_and_process_member_xlsx(self, user_id, xlsx_file):
+  def upload_and_process_estate_customer_info_xlsx(self, user_id, estate_info_id, xlsx_file):
     if xlsx_file.filename == '':
       raise werkzeug.exceptions.BadRequest('no file found')
     if xlsx_file.mimetype not in constants.XLSX_MIME_TYPES:
@@ -46,7 +47,9 @@ class FileOpsService():
           ', '.join(mimetype for mimetype in constants.XLSX_MIME_TYPES)
         )
       )
+    self.estate_service.find_by_id(estate_info_id)
     file_dir_final = os.path.join(self.upload_path, str(user_id))
+    os.makedirs(file_dir_final, exist_ok=True)
     file_name = '%s' % (str(bson.ObjectId()))
     file_ext = constants.XLSX_MIME_TYPES[xlsx_file.mimetype]
     final_file_path = os.path.join(file_dir_final, '%s.%s' % (file_name, file_ext))
@@ -62,6 +65,7 @@ class FileOpsService():
       params = {
         "original_file_name": xlsx_file.filename,
         "fs_path": final_file_path,
+        "estate_info_id": estate_info_id,
       },
       messages = '',
       system_pid = 0,
@@ -69,57 +73,9 @@ class FileOpsService():
       run_at = None,
       finished_at = None,
     )
-    self.task_col.insert_one(task_entry)
+    self.collection.insert_one(task_entry)
 
     # process task
     process = multiprocessing.Process(target=process_task, args=(task_id, ))
     process.start()
     return task_entry
-
-  def upload_image(self, user_id, image_file, preferred_max_size=2048):
-    if image_file.filename == '':
-      raise werkzeug.exceptions.BadRequest('no file found')
-    if image_file.mimetype not in constants.ALLOWED_IMAGE_MIME_TYPES:
-      raise werkzeug.exceptions.BadRequest(
-        'available mimetypes: %s' % (
-          ', '.join(mimetype for mimetype in constants.ALLOWED_IMAGE_MIME_TYPES)
-        )
-      )
-    file_ext = constants.ALLOWED_IMAGE_MIME_TYPES[image_file.mimetype]
-    file_dir_final = os.path.join(self.upload_path, str(user_id))
-    if not os.path.isdir(file_dir_final):
-      os.makedirs(file_dir_final, exist_ok=True)
-
-    file_name = '%s' % (str(bson.ObjectId()))
-    tmp_image_path = os.path.join(file_dir_final, '.%s.%s' % (file_name, file_ext))
-    image_file.save(tmp_image_path)
-    try:
-      final_image_path, new_width, new_height = self.compact_image(
-        tmp_image_path,
-        file_dir_final,
-        file_name,
-        preferred_max_size
-      )
-      os.remove(tmp_image_path)
-      return os.path.join(self.url_pfx, str(user_id), os.path.basename(final_image_path)), new_width, new_height
-    except:
-      raise werkzeug.exceptions.InternalServerError('processing image failed')
-    
-  def compact_image(self, old_path, file_dir_final, new_file_name, preferred_max_size=2048):
-    with Image.open(old_path) as img:
-      width, height = img.size
-      if max(width, height) > preferred_max_size:
-        if width > height:
-          new_width = preferred_max_size
-          new_height = int(height * (preferred_max_size / width)) or 1
-        else:
-          new_height = preferred_max_size
-          new_width = int(width * (preferred_max_size / height)) or 1
-      else:
-        new_width, new_height = width, height
-      resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-      final_image_name = new_file_name + '.webp'
-      final_image_path = os.path.join(file_dir_final, final_image_name)
-      resized_img.save(final_image_path, "WEBP")
-      return final_image_path, new_width, new_height
-    

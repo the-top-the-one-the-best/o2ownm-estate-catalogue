@@ -82,4 +82,15 @@ def enum_set(c):
   )
 
 CUSTOMER_XLSX_HEADER_MAP = {
+  "姓名": "name",
+  "頭銜/稱謂": "title_pronoun",
+
+  "電話": "phone",
+  "E-Mail": "email",
+  "居住縣市": "l1_district",
+  "居住鄉鎮地區": "l2_district",
+  "喜好房型": "room_layouts",
+  "客戶標籤": "customer_tags",
+
+  "填單日": "info_date",
 }

@@ -86,7 +86,6 @@ class SystemLogService():
     }
     if not matched_count is None:
       result["matched_count"] = matched_count
-    print (result)
     return result
   
   def log_auth_events(
