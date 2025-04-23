@@ -88,7 +88,7 @@ CUSTOMER_XLSX_HEADER_MAP = {
   "電話": "phone",
   "E-Mail": "email",
   "居住縣市": "l1_district",
-  "居住鄉鎮地區": "l2_district",
+  "居住鄉鎮市區": "l2_district",
   "喜好房型": "room_layouts",
   "客戶標籤": "customer_tags",
 
