@@ -30,6 +30,7 @@ class UpsertCustomerInfoDto(Schema):
   phone = fields.String(missing="", metadata={"example": "0987654321"})
   email = fields.String(validate=lambda x: x == "" or validate.Email(), metadata={"example": "user@example.com"})
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "台南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })

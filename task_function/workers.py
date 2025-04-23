@@ -1,3 +1,4 @@
+import sys
 import pymongo
 import os
 import pytz
@@ -26,22 +27,16 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
     )
     try:
       if task["task_type"] == TaskTypes.import_customer_xlsx:
-        params = task["params"]
-        file_path = params["fs_path"]
-        estate_info_id = params["estate_info_id"]
-        result = process_customer_xlsx(file_path, estate_info_id, mongo_client=mongo_client)
+        result = process_customer_xlsx(task, check_unique_phone=True, mongo_client=mongo_client)
         break
       else:
         raise ValueError("task_type should be one of %s" % enum_set(TaskTypes))
     except Exception as e:
+      err_msg = traceback.format_exc()
+      print(err_msg, file=sys.stderr)
       task_col.update_one(
         { "_id": task_id },
-        { 
-          "$set": {
-            "state": TaskStates.failed,
-            "message": traceback.format_exc(),
-          }
-        }
+        { "$set": { "state": TaskStates.failed, "message": err_msg } }
       )
       return
     

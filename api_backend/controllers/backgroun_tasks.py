@@ -25,9 +25,12 @@ bg_service = BackgroundTaskService()
 @marshal_with(SchedulerTaskSchema)
 def upload_and_process_estate_customer_info_xlsx(estate_info_id, **kwargs):
   user_id = get_jwt_identity()
-  estate_info_id = validate_object_id(estate_info_id)
   if 'xlsx' not in flask.request.files:
     raise werkzeug.exceptions.BadRequest('no file found')
   xlsx_file = flask.request.files['xlsx']
-  new_task = bg_service.upload_and_process_estate_customer_info_xlsx(user_id, estate_info_id, xlsx_file)
+  new_task = bg_service.upload_and_process_estate_customer_info_xlsx(
+    validate_object_id(user_id),
+    validate_object_id(estate_info_id),
+    xlsx_file,
+  )
   return flask.jsonify(SchedulerTaskSchema().dump(new_task))

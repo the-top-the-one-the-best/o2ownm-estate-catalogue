@@ -90,6 +90,7 @@ CUSTOMER_XLSX_HEADER_MAP = {
   "居住縣市": "l1_district",
   "居住鄉鎮市區": "l2_district",
   "喜好房型": "room_layouts",
+  "坪數需求": "room_sizes",
   "客戶標籤": "customer_tags",
 
   "填單日": "info_date",

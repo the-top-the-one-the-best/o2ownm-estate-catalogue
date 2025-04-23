@@ -91,8 +91,8 @@ class PublicUserDto(UserSchema):
 PagedPublicUserDto = create_page_result_dto(PublicUserDto)
 
 class CredentialDto(Schema):
-  email = fields.Email(required=True)
-  password = fields.String(required=True)
+  email = fields.Email(required=True, metadata={"example": "alexchiu@bclab.ai"})
+  password = fields.String(required=True, metadata={"example": "********"})
   class Meta:
     unknown = EXCLUDE
   @post_load
