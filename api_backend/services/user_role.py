@@ -21,7 +21,7 @@ class UserRoleService():
     match_filter = {}
     if type(query_dto.get("name")) is str and query_dto["name"]:
       pattern = ".*%s.*" % (query_dto["name"], )
-      pattern_regex = re.compile(pattern)
+      pattern_regex = re.compile(pattern, re.IGNORECASE)
       match_filter["name"] = pattern_regex
     page_size = query_dto.get("page_size")
     page_number = query_dto.get("page_number")
