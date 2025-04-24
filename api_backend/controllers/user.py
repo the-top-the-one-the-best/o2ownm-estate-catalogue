@@ -14,6 +14,7 @@ from api_backend.dtos.user import (
   UpdatePasswordDto,
   UpdateUserDto,
   UpdateUserPermissionDto,
+  UserQueryDto,
 )
 from api_backend.utils.auth_utils import admins_only, check_permission
 from api_backend.utils.mongo_helpers import validate_object_id
@@ -105,7 +106,7 @@ def update_my_profile(**kwargs):
   tags=[APITags.user, APITags.admin],
   security=[Config.JWT_SECURITY_OPTION]
 )
-@use_kwargs(GeneralPagedQueryDto)
+@use_kwargs(UserQueryDto)
 @marshal_with(PagedPublicUserDto)
 def get_users(**kwargs):
   return flask.jsonify(

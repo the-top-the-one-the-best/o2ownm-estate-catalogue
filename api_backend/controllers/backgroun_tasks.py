@@ -4,7 +4,7 @@ from flask_apispec import doc, marshal_with, use_kwargs
 from api_backend.dtos.background_tasks import XlsxUploadDto
 from api_backend.schemas import SchedulerTaskSchema
 from api_backend.services.background_tasks import BackgroundTaskService
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from api_backend.utils.auth_utils import check_permission
 from api_backend.utils.mongo_helpers import validate_object_id
 from config import Config
@@ -14,10 +14,25 @@ name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
 bg_service = BackgroundTaskService()
 
+@blueprint.route('/task_id/<task_id>', methods=['GET'])
+@jwt_required()
+@doc(
+  summary='query upload customer info excel task status',
+  tags=[APITags.file_ops],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@marshal_with(SchedulerTaskSchema)
+def get_task_by_id(task_id):
+  target_task = bg_service.get_task_by_id(validate_object_id(task_id))
+  return flask.jsonify(SchedulerTaskSchema().dump(target_task))
+
 @blueprint.route('/customer_info_xlsx/estate_info_id/<estate_info_id>', methods=['POST'])
 @check_permission(PermissionTargets.estate_customer_info, Permission.write)
 @doc(
-  summary='upload customer info excel for estate by estate id',
+  summary='upload customer info excel for estate by estate id, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.write,
+  ),
   tags=[APITags.file_ops],
   security=[Config.JWT_SECURITY_OPTION],
 )

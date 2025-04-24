@@ -25,6 +25,8 @@ class BackgroundTaskService():
     os.makedirs(self.upload_path, exist_ok=True)
     return
   
+
+  
   def remove_from_fs(self, resource_url: str):
     if not resource_url:
       return
@@ -79,3 +81,9 @@ class BackgroundTaskService():
     process = multiprocessing.Process(target=process_task, args=(task_id, ))
     process.start()
     return task_entry
+
+  def get_task_by_id(self, _id):
+    target = self.collection.find_one({ "_id": _id })
+    if not target:
+      raise werkzeug.exceptions.NotFound()
+    return target

@@ -1,3 +1,4 @@
+import re
 import uuid
 import bson
 import pytz
@@ -40,6 +41,14 @@ class UserService():
   
   def __query_by_filter__(self, query_dto):
     match_filter = {}
+    if type(query_dto.get("name")) is str and query_dto["name"]:
+      pattern = ".*%s.*" % (query_dto["name"], )
+      pattern_regex = re.compile(pattern)
+      match_filter["name"] = pattern_regex
+    if type(query_dto.get("email")) is str and query_dto["email"]:
+      pattern = ".*%s.*" % (query_dto["email"], )
+      pattern_regex = re.compile(pattern)
+      match_filter["email"] = pattern_regex
     page_size = query_dto.get("page_size")
     page_number = query_dto.get("page_number")
     agg_stages = []
