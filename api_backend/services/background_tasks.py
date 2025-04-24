@@ -25,8 +25,6 @@ class BackgroundTaskService():
     os.makedirs(self.upload_path, exist_ok=True)
     return
   
-
-  
   def remove_from_fs(self, resource_url: str):
     if not resource_url:
       return

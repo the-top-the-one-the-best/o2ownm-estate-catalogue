@@ -3,9 +3,6 @@ import pymongo
 import re
 import pytz
 import werkzeug.exceptions
-from api_backend.schemas import EstateTagSchema
-from api_backend.services.estate_info import EstateInfoService
-from api_backend.utils.mongo_helpers import build_mongo_index
 from config import Config
 
 class UserRoleService():
