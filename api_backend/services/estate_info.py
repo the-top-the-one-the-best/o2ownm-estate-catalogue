@@ -29,7 +29,7 @@ class EstateInfoService():
       match_filter["_id"] = {"$in": query_dto["_ids"]}
     if type(query_dto.get("name")) is str and query_dto["name"]:
       pattern = ".*%s.*" % (query_dto["name"], )
-      pattern_regex = re.compile(pattern)
+      pattern_regex = re.compile(pattern, re.IGNORECASE)
       match_filter["name"] = pattern_regex
     if type(query_dto.get("room_layouts")) is list and query_dto["room_layouts"]:
       match_filter["room_layouts"] = { "$all": query_dto["room_layouts"] }

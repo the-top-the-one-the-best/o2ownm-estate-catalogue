@@ -25,7 +25,7 @@ class CustomerTagsService():
     match_filter = {}
     if type(query_dto.get("name")) is str and query_dto["name"]:
       pattern = ".*%s.*" % (query_dto["name"], )
-      pattern_regex = re.compile(pattern)
+      pattern_regex = re.compile(pattern, re.IGNORECASE)
       match_filter["name"] = pattern_regex
     if type(query_dto.get("is_frequently_used")) is bool and query_dto["is_frequently_used"]:
       match_filter["is_frequently_used"] = True
