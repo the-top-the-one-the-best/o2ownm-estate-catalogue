@@ -113,8 +113,7 @@ class EstateInfoService():
       if len(tags_diff):
         raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
     self.collection.find_one_and_update({"_id": _id}, {"$set": dto})
-    result = self.find_by_id(_id)
-    return self.find_by_id(result)
+    return self.find_by_id(_id)
     
   def delete_by_id(self, _id, user_id=None):
     result = self.collection.find_one_and_delete({"_id": _id})
