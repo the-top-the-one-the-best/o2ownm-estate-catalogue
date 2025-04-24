@@ -1,4 +1,5 @@
 from datetime import datetime
+from bson import ObjectId
 import pymongo
 import pytz
 import werkzeug.exceptions
@@ -15,6 +16,8 @@ class CustomerInfoService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.customerinfos
+    self.customer_tag_collection = self.db.customertags
+    self.estate_info_collection = self.db.estateinfos
     if not CustomerInfoService.__loaded__:
       CustomerInfoService.__loaded__ = True
       for index in (CustomerInfoSchema.MongoMeta.index_list):
@@ -77,15 +80,40 @@ class CustomerInfoService():
     dto["updated_at"] = datetime.now(pytz.UTC)
     dto["creator_id"] = user_id
     dto["updater_id"] = user_id
+    if type(dto.get("customer_tags")) is list and dto["customer_tags"]:
+      found_tags = { 
+        tag["_id"] for tag in self.customer_tag_collection.find(
+          { "_id": { "$in": dto["customer_tags"] }}, { "_id": 1 }
+        )
+      }
+      provided_tags = set(dto["customer_tags"])
+      tags_diff = provided_tags - found_tags
+      if len(tags_diff):
+        raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
+    if type(dto.get("estate_info_id")) is ObjectId:
+      if not self.estate_info_collection.find_one({ "_id": dto["estate_info_id"]}):
+        raise werkzeug.exceptions.NotFound("estate %s not found" % str(dto["estate_info_id"]))
     inserted_id = self.collection.insert_one(dto).inserted_id
     return self.find_by_id(inserted_id)
   
   def update_by_id(self, _id, dto, user_id=None):
     dto["updated_at"] = datetime.now(pytz.UTC)
     dto["updater_id"] = user_id
+    if type(dto.get("customer_tags")) is list and dto["customer_tags"]:
+      found_tags = { 
+        tag["_id"] for tag in self.customer_tag_collection.find(
+          { "_id": { "$in": dto["customer_tags"] }}, { "_id": 1 }
+        )
+      }
+      provided_tags = set(dto["customer_tags"])
+      tags_diff = provided_tags - found_tags
+      if len(tags_diff):
+        raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
+    if type(dto.get("estate_info_id")) is ObjectId:
+      if not self.estate_info_collection.find_one({ "_id": dto["estate_info_id"]}):
+        raise werkzeug.exceptions.NotFound("estate %s not found" % str(dto["estate_info_id"]))
     self.collection.find_one_and_update({"_id": _id}, {"$set": dto})
-    result = self.find_by_id(_id)
-    return self.find_by_id(result)
+    return self.find_by_id(_id)
   
   def delete_by_id(self, _id, user_id=None):
     result = self.collection.find_one_and_delete({"_id": _id})

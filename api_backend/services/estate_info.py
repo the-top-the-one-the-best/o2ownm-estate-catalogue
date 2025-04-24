@@ -17,6 +17,7 @@ class EstateInfoService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.estateinfos
+    self.estate_tag_collection = self.db.estatetags
     self.customer_info_service = CustomerInfoService()
     if not EstateInfoService.__loaded__:
       EstateInfoService.__loaded__ = True
@@ -85,12 +86,32 @@ class EstateInfoService():
     dto["updated_at"] = datetime.now(pytz.UTC)
     dto["creator_id"] = user_id
     dto["updater_id"] = user_id
+    if type(dto.get("estate_tags")) is list and dto["estate_tags"]:
+      found_tags = { 
+        tag["_id"] for tag in self.estate_tag_collection.find(
+          { "_id": { "$in": dto["estate_tags"] }}, { "_id": 1 }
+        )
+      }
+      provided_tags = set(dto["estate_tags"])
+      tags_diff = provided_tags - found_tags
+      if len(tags_diff):
+        raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
     inserted_id = self.collection.insert_one(dto).inserted_id
     return self.find_by_id(inserted_id)
 
   def update_by_id(self, _id, dto, user_id=None):
     dto["updated_at"] = datetime.now(pytz.UTC)
     dto["updater_id"] = user_id
+    if type(dto.get("estate_tags")) is list and dto["estate_tags"]:
+      found_tags = { 
+        tag["_id"] for tag in self.estate_tag_collection.find(
+          { "_id": { "$in": dto["estate_tags"] }}, { "_id": 1 }
+        )
+      }
+      provided_tags = set(dto["estate_tags"])
+      tags_diff = provided_tags - found_tags
+      if len(tags_diff):
+        raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
     self.collection.find_one_and_update({"_id": _id}, {"$set": dto})
     result = self.find_by_id(_id)
     return self.find_by_id(result)

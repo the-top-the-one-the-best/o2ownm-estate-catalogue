@@ -2,7 +2,6 @@ import pymongo
 import re
 import werkzeug.exceptions
 from api_backend.schemas import EstateTagSchema
-from api_backend.services.estate_info import EstateInfoService
 from api_backend.utils.mongo_helpers import build_mongo_index
 from config import Config
 
@@ -15,7 +14,7 @@ class EstateTagsService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.estatetags
-    self.estate_info_service = EstateInfoService()
+    self.estate_info_collection = self.db.estateinfos
     if not EstateTagsService.__loaded__:
       EstateTagsService.__loaded__ = True
       for index in (EstateTagSchema.MongoMeta.index_list):
@@ -79,7 +78,7 @@ class EstateTagsService():
     if not result:
       raise werkzeug.exceptions.NotFound
     # update estate info tags field
-    self.estate_info_service.collection.update_many(
+    self.estate_info_collection.update_many(
       { "estate_tags": _id },
       { "$pull": { "estate_tags": _id } },
     )

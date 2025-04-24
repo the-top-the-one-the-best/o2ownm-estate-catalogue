@@ -10,9 +10,9 @@ class QueryCustomerInfoDto(GeneralPagedQueryDto):
   estate_info_id = fields.ObjectId()
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   # Discrict query example:
-  # 台北市全境 + 新北市三重區 = [
+  # 臺北市全境 + 新北市三重區 = [
   #   { "l1_district": "新北市",  "l2_district": "三重區" },
-  #   { "l1_district": "台北市" },
+  #   { "l1_district": "臺北市" },
   # ]
   districts = fields.List(fields.Nested(DistrictInfoSchema))
   room_size = fields.Nested(RoomSizeSchema())
@@ -32,7 +32,7 @@ class UpsertCustomerInfoDto(Schema):
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
-  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "台南市" })
+  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "臺南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
   customer_tags = fields.List(fields.ObjectId())
   class Meta:

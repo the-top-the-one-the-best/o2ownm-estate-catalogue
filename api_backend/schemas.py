@@ -194,7 +194,7 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   name = fields.String(missing="")
   construction_company = fields.String(missing="")
   address = fields.String()
-  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "台南市" })
+  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "臺南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
@@ -232,7 +232,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
-  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "台南市" })
+  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "臺南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
   customer_tags = fields.List(fields.ObjectId())
 
@@ -264,7 +264,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
     return self.__arrange_data__(data)
 
 class DistrictInfoSchema(Schema):
-  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "台南市" })
+  l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "臺南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
 
 class UserRoleSchema(MongoDefaultDocumentSchema):

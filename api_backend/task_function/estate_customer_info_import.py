@@ -36,10 +36,7 @@ def process_customer_xlsx(
     for index, header in enumerate(headers)
   }
   data_list = []
-  __district_map = { l1["name"]: l1 for l1 in twdistricts_col.find() }
-  for l1 in __district_map.values():
-    l1["districts"] = { l2["name"]: l2 for l2 in l1["districts"] }
-
+  __district_map = ResourceService.DISTRICT_MAP
   __room_layouts = enum_set(RoomLayouts)
   __customer_tags = {
     cursor["name"]: cursor["_id"]

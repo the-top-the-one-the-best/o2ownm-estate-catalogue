@@ -2,7 +2,6 @@ import pymongo
 import re
 import werkzeug.exceptions
 from api_backend.schemas import CustomerTagSchema
-from api_backend.services.customer_info import CustomerInfoService
 from api_backend.utils.mongo_helpers import build_mongo_index
 from config import Config
 
@@ -15,7 +14,7 @@ class CustomerTagsService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.customertags
-    self.customer_info_svc = CustomerInfoService()
+    self.customer_info_collection = self.db.customerinfos
     if not CustomerTagsService.__loaded__:
       CustomerTagsService.__loaded__ = True
       for index in (CustomerTagSchema.MongoMeta.index_list):
@@ -79,7 +78,7 @@ class CustomerTagsService():
     if not result:
       raise werkzeug.exceptions.NotFound
     # update customer info tags field
-    self.customer_info_svc.collection.update_many(
+    self.customer_info_collection.update_many(
       { "customer_tags": _id },
       { "$pull": { "customer_tags": _id } },
     )

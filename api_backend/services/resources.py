@@ -5,6 +5,7 @@ from config import Config
 
 class ResourceService():
   __loaded__ = False
+  DISTRICT_MAP = {}
   def __init__(
     self,
     mongo_client=pymongo.MongoClient(Config.MONGO_MAIN_URI),
@@ -14,8 +15,12 @@ class ResourceService():
     self.twdistricts_collection = self.db.twdistricts
     if not ResourceService.__loaded__:
       ResourceService.__loaded__ = True
+      ResourceService.DISTRICT_MAP = { l1["name"]: l1 for l1 in self.twdistricts_collection.find() }
+      for l1 in ResourceService.DISTRICT_MAP.values():
+        l1["districts"] = { l2["name"]: l2 for l2 in l1["districts"] }
       for index in (TaiwanAdministrativeDistrictSchema.MongoMeta.index_list):
         build_mongo_index(self.twdistricts_collection, index)
+    
 
   def get_l1_tw_administrative_districts(self, query_dto):
     l1_district = query_dto.get("l1_district")
