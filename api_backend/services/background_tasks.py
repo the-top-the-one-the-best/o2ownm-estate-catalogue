@@ -2,13 +2,13 @@ import multiprocessing
 import pymongo
 import pytz
 from api_backend.services.estate_info import EstateInfoService
+from api_backend.task_function.workers import process_task
 import constants
 import os
 import bson
 import werkzeug.exceptions
 from config import Config
 from datetime import datetime
-from task_function.workers import process_task
 
 class BackgroundTaskService():
   def __init__(

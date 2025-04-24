@@ -1,18 +1,22 @@
 import flask
 import os
-from flask_apispec import doc, marshal_with
+from flask_apispec import doc, marshal_with, use_kwargs
+from api_backend.dtos.resources import QueryDistrictByNameSchema
 from api_backend.schemas import TaiwanAdministrativeDistrictSchema
+from api_backend.services.resources import ResourceService
 from constants import APITags
 
 name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
 
-@doc(summary="get TW administrative districts", tags=[APITags.resources])
-@blueprint.route("/tw_administrative_districts", methods=["GET"])
+resource_service = ResourceService()
+@doc(summary="get l1 TW administrative district by names", tags=[APITags.resources])
+@blueprint.route("/tw_administrative_districts/query", methods=["GET"])
+@use_kwargs(QueryDistrictByNameSchema, location="query")
 @marshal_with(TaiwanAdministrativeDistrictSchema(many=True))
-def get_tw_administrative_districts():
-  json_path = os.path.join("resources", "tw_administrative_districts.json")
-  return flask.send_file(json_path, mimetype="application/json")
+def get_tw_administrative_districts_by_name(**kwargs):
+  targets = resource_service.get_l1_tw_administrative_districts(kwargs)
+  return flask.jsonify(TaiwanAdministrativeDistrictSchema(many=True).dump(targets))
 
 @doc(summary="get estate customer xlsx import template", tags=[APITags.resources])
 @blueprint.route("/estate_customer_xlsx_import_template", methods=["GET"])

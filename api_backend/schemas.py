@@ -49,19 +49,20 @@ class HeartBeatSchema(Schema):
   uptime = fields.DefaultUTCDateTime()
   version = fields.String()
 
-class TaiwanAdministrativeDistrictSchema(Schema):
-  class TaiwanCountyZipSchema(Schema):
-    name = fields.String()
-    zip = fields.String()
-  name = fields.String()
-  districts = fields.List(fields.Nested(TaiwanCountyZipSchema))
-
-
 # base schema for all mongo documents using objectId
 class MongoDefaultDocumentSchema(Schema):
   _id = fields.ObjectId()
 
-    
+class TaiwanCountyZipSchema(Schema):
+  name = fields.String()
+  zip = fields.String()
+
+class TaiwanAdministrativeDistrictSchema(MongoDefaultDocumentSchema):
+  name = fields.String()
+  districts = fields.List(fields.Nested(TaiwanCountyZipSchema))
+  class MongoMeta:
+    index_list = [{ "name": 1, "districts.name": 1 }]
+
 class UserPermissionSchema(Schema):
   account = fields.String(
     default=Permission.full,

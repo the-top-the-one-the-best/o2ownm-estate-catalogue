@@ -4,9 +4,9 @@ import os
 import pytz
 import traceback
 from datetime import datetime
+from api_backend.task_function.estate_customer_info_import import process_customer_xlsx
 from constants import TaskStates, TaskTypes, enum_set
 from config import Config
-from task_function.estate_customer_info_import import process_customer_xlsx
 
 def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
   mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)    
@@ -27,7 +27,7 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
     )
     try:
       if task["task_type"] == TaskTypes.import_customer_xlsx:
-        result = process_customer_xlsx(task, check_unique_phone=True, mongo_client=mongo_client)
+        result = process_customer_xlsx(task, check_unique_phone=True)
         break
       else:
         raise ValueError("task_type should be one of %s" % enum_set(TaskTypes))

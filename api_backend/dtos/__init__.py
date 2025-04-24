@@ -5,6 +5,7 @@ from . import (
   estate_info,
   estate_tags,
   generic,
+  resources,
   system_log,
   user,
   user_role,

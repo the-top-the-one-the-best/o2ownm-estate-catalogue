@@ -2,20 +2,30 @@ from datetime import datetime, timedelta
 import pymongo
 import openpyxl
 import pytz
+from api_backend.services.resources import ResourceService
 from constants import CUSTOMER_XLSX_HEADER_MAP, enum_set, RoomLayouts
 from config import Config
 
-def process_customer_xlsx(task, check_unique_phone=False, mongo_client=None, member_col_name="customerinfos", customer_tags_col_name="customertags"):
+def process_customer_xlsx(
+    task, 
+    check_unique_phone=False, 
+    mongo_client=None, 
+    member_col_name="customerinfos", 
+    customer_tags_col_name="customertags",
+    tw_districts_col_name="twdistricts",
+  ):
   params = task["params"]
   task_id = task["_id"]
   creator_id = task.get("creator_id")
   file_path = params["fs_path"]
   estate_info_id = params["estate_info_id"]
+
   if not mongo_client:
     mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)    
   db = mongo_client.get_database()
   member_col = db.get_collection(member_col_name)
   customer_tags_col = db.get_collection(customer_tags_col_name)
+  twdistricts_col = db.get_collection(tw_districts_col_name)
 
   workbook = openpyxl.load_workbook(file_path)
   worksheet = workbook.active
@@ -26,6 +36,10 @@ def process_customer_xlsx(task, check_unique_phone=False, mongo_client=None, mem
     for index, header in enumerate(headers)
   }
   data_list = []
+  __district_map = { l1["name"]: l1 for l1 in twdistricts_col.find() }
+  for l1 in __district_map.values():
+    l1["districts"] = { l2["name"]: l2 for l2 in l1["districts"] }
+
   __room_layouts = enum_set(RoomLayouts)
   __customer_tags = {
     cursor["name"]: cursor["_id"]
@@ -76,8 +90,24 @@ def process_customer_xlsx(task, check_unique_phone=False, mongo_client=None, mem
           else:
             size_ranges.append({"size_min": float(size_range), "size_max": float(size_range)})
         data[field_name] = size_ranges
-        
+    
+    # check entry has necessary infos
     if data.get("phone") and data.get("name"):
+      # verify district
+      if {"l1_district", "l2_district"}.intersection(data):
+        l1_district = data.get("l1_district") or ""
+        l2_district = data.get("l2_district") or ""
+        l1_district = l1_district.replace("台", "臺")
+        l2_district = l2_district.replace("台", "臺")
+        target_l1 = __district_map.get(l1_district)
+        if target_l1:
+          data["l1_district"] = target_l1["name"]
+          target_l2 = target_l1["districts"].get(l2_district)
+          if target_l2:
+            data["l2_district"] = target_l2["name"]
+        else:
+          data["l1_district"] = ""
+          data["l2_district"] = ""
       data_list.append(data)
 
   # Insert into MongoDB

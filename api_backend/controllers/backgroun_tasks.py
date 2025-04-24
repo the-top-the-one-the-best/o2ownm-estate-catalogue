@@ -14,7 +14,7 @@ name = __name__.replace(".", "_")
 blueprint = flask.Blueprint(name, __name__)
 bg_service = BackgroundTaskService()
 
-@blueprint.route('/customer_info_xlsx/<estate_info_id>', methods=['POST'])
+@blueprint.route('/customer_info_xlsx/estate_info_id/<estate_info_id>', methods=['POST'])
 @check_permission(PermissionTargets.estate_customer_info, Permission.write)
 @doc(
   summary='upload customer info excel for estate by estate id',
