@@ -79,9 +79,8 @@ def create(**kwargs):
 @use_kwargs(UpsertUserRoleDto)
 @marshal_with(UserRoleSchema)
 def update_by_id(_id, **kwargs):
-  _id = validate_object_id(_id)
   user_id = validate_object_id(get_jwt_identity())
-  result = user_role_service.update_by_id(_id, kwargs, user_id=user_id)
+  result = user_role_service.update_by_id(validate_object_id(_id), kwargs, user_id=user_id)
   return flask.jsonify(UserRoleSchema().dump(result))
 
 @blueprint.route("/_id/<_id>", methods=["DELETE"])

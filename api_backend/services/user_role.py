@@ -56,25 +56,24 @@ class UserRoleService():
     return result
   
   def create(self, dto, user_id=None):
-    check_exists = self.collection.find_one(dto.get("name"))
+    if self.collection.find_one({ "name": dto.get("name") }):
+      raise werkzeug.exceptions.Conflict("duplicated name %s" % (dto["name"], ))
     dto["creator_id"] = user_id
     dto["updater_id"] = user_id
     dto["created_at"] = datetime.now(pytz.UTC)
     dto["updated_at"] = datetime.now(pytz.UTC)
-    if check_exists:
-      raise werkzeug.exceptions.Conflict("duplicated tag %s" % (dto.get("name"), ))
     inserted_id = self.collection.insert_one(dto).inserted_id
     return self.find_by_id(inserted_id)
 
   def update_by_id(self, _id, dto, user_id=None):
+    if type(dto.get("name")) is str:
+      if self.collection.find_one({ "name": dto["name"], "_id": { "$ne": _id } }):
+        raise werkzeug.exceptions.Conflict("duplicated name %s" % (dto["name"], ))
+      
     dto["updater_id"] = user_id
     dto["updated_at"] = datetime.now(pytz.UTC)
-    if type(dto.get("name")) is str:
-      if self.collection.find_one(dto["name"]):
-        raise werkzeug.exceptions.Conflict("duplicated tag %s" % (dto["name"], ))
     self.collection.find_one_and_update({"_id": _id}, {"$set": dto})
-    result = self.find_by_id(_id)
-    return self.find_by_id(result)
+    return self.find_by_id(_id)
     
   def delete_by_id(self, _id, user_id=None):
     result = self.collection.find_one_and_delete({"_id": _id})
