@@ -27,7 +27,7 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
     )
     try:
       if task["task_type"] == TaskTypes.import_customer_xlsx:
-        result = process_customer_xlsx(task, check_unique_phone=True)
+        result = process_customer_xlsx(task)
         break
       else:
         raise ValueError("task_type should be one of %s" % enum_set(TaskTypes))

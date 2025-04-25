@@ -8,24 +8,21 @@ from config import Config
 
 def process_customer_xlsx(
     task, 
-    check_unique_phone=False, 
     mongo_client=None, 
-    member_col_name="customerinfos", 
-    customer_tags_col_name="customertags",
-    tw_districts_col_name="twdistricts",
   ):
-  params = task["params"]
   task_id = task["_id"]
   creator_id = task.get("creator_id")
+
+  # load task parameters
+  params = task["params"]
   file_path = params["fs_path"]
   estate_info_id = params["estate_info_id"]
+  auto_create_customer_tags = bool(params.get("auto_create_customer_tags"))
+  overwrite_existing_user_by_phone = bool(params.get("overwrite_existing_user_by_phone"))
+  timezone_offset = int(params.get("timezone_offset"))
 
   if not mongo_client:
     mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)    
-  db = mongo_client.get_database()
-  member_col = db.get_collection(member_col_name)
-  customer_tags_col = db.get_collection(customer_tags_col_name)
-  twdistricts_col = db.get_collection(tw_districts_col_name)
 
   workbook = openpyxl.load_workbook(file_path)
   worksheet = workbook.active
@@ -38,9 +35,11 @@ def process_customer_xlsx(
   data_list = []
   __district_map = ResourceService.DISTRICT_MAP
   __room_layouts = enum_set(RoomLayouts)
-  __customer_tags = {
+  from api_backend.services.customer_tags import CustomerTagsService
+  customer_tag_service = CustomerTagsService(mongo_client=mongo_client)
+  __customer_tag_name_id_map = {
     cursor["name"]: cursor["_id"]
-    for cursor in customer_tags_col.find({})
+    for cursor in customer_tag_service.collection.find({})
   }
   basic_string_fields = {"name", "title_pronoun", "phone", "l1_district", "l2_district"}
   for row in worksheet.iter_rows(min_row=2, values_only=True):
@@ -64,17 +63,26 @@ def process_customer_xlsx(
         data[field_name] = list(
           set(layout.strip() for layout in str(value).split(",")).intersection(__room_layouts)
         )
-      elif field_name == "customer_tags":
-        found_tags = []
+      elif field_name == "customer_tags" and value:
+        found_tag_ids = []
         for tag_name in str(value).split(","):
           tag_name = tag_name.strip()
-          found_tag = __customer_tags.get(tag_name)
-          if found_tag:
-            found_tags.append(found_tag)
-        data[field_name] = found_tags
+          found_tag_id = __customer_tag_name_id_map.get(tag_name)
+          if found_tag_id:
+            found_tag_ids.append(found_tag_id)
+          elif auto_create_customer_tags:
+            new_tag = customer_tag_service.create({
+              "name": tag_name,
+              "description": "auto created",
+              "is_frequently_used": False,
+            })
+            __customer_tag_name_id_map[tag_name] = new_tag["_id"]
+            found_tag_ids.append(new_tag["_id"])
+        data[field_name] = sorted(found_tag_ids)
+        
       elif field_name == "info_date":
         if type(value) is datetime:
-          data[field_name] = value + timedelta(hours=8)
+          data[field_name] = value + timedelta(hours=timezone_offset)
         else:
           data[field_name] = datetime.now(pytz.UTC)
       elif field_name == "room_sizes" and value and value.strip():
@@ -108,13 +116,15 @@ def process_customer_xlsx(
       data_list.append(data)
 
   # Insert into MongoDB
+  from api_backend.services.customer_info import CustomerInfoService
+  customer_info_service = CustomerInfoService(mongo_client=mongo_client)
   BATCH_SIZE = 200
   i = 0
   while True:
     batch = data_list[i:i+BATCH_SIZE]
     if not batch:
       break
-    if check_unique_phone:
+    if overwrite_existing_user_by_phone:
       batch = [
         pymongo.UpdateOne(
           { "estate_info_id": estate_info_id, "phone": elem["phone"] },
@@ -122,9 +132,9 @@ def process_customer_xlsx(
           upsert=True,
         ) for elem in batch
       ]
-      member_col.bulk_write(batch)
+      customer_info_service.collection.bulk_write(batch)
     else:
-      member_col.insert_many(batch)
+      customer_info_service.collection.insert_many(batch)
 
     i += BATCH_SIZE
   return f"{len(data_list)} records processed"

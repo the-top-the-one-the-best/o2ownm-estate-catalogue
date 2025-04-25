@@ -38,7 +38,15 @@ class BackgroundTaskService():
       except:
         return
   
-  def upload_and_process_estate_customer_info_xlsx(self, user_id, estate_info_id, xlsx_file):
+  def upload_and_process_estate_customer_info_xlsx(
+    self,
+    user_id,
+    estate_info_id,
+    xlsx_file,
+    auto_create_customer_tags=False,
+    overwrite_existing_user_by_phone=False,
+    timezone_offset=+8,
+  ):
     if xlsx_file.filename == '':
       raise werkzeug.exceptions.BadRequest('no file found')
     if xlsx_file.mimetype not in constants.XLSX_MIME_TYPES:
@@ -66,6 +74,9 @@ class BackgroundTaskService():
         "original_file_name": xlsx_file.filename,
         "fs_path": final_file_path,
         "estate_info_id": estate_info_id,
+        "auto_create_customer_tags": auto_create_customer_tags,
+        "overwrite_existing_user_by_phone": overwrite_existing_user_by_phone,
+        "timezone_offset": timezone_offset,
       },
       messages = '',
       system_pid = 0,

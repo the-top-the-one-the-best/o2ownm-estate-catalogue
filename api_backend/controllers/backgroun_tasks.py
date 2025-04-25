@@ -1,7 +1,7 @@
 import flask
 import werkzeug.exceptions
 from flask_apispec import doc, marshal_with, use_kwargs
-from api_backend.dtos.background_tasks import XlsxUploadDto
+from api_backend.dtos.background_tasks import EstateCustomerInfoImportOptionDto, XlsxUploadDto
 from api_backend.schemas import SchedulerTaskSchema
 from api_backend.services.background_tasks import BackgroundTaskService
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -36,16 +36,25 @@ def get_task_by_id(task_id):
   tags=[APITags.file_ops],
   security=[Config.JWT_SECURITY_OPTION],
 )
+
+@use_kwargs(EstateCustomerInfoImportOptionDto, location="query")
 @use_kwargs(XlsxUploadDto, location="files")
 @marshal_with(SchedulerTaskSchema)
 def upload_and_process_estate_customer_info_xlsx(estate_info_id, **kwargs):
   user_id = get_jwt_identity()
+  auto_create_customer_tags = bool(kwargs.get("auto_create_customer_tags"))
+  overwrite_existing_user_by_phone = bool(kwargs.get("overwrite_existing_user_by_phone"))
+  timezone_offset = int(kwargs.get("timezone_offset"))
   if 'xlsx' not in flask.request.files:
     raise werkzeug.exceptions.BadRequest('no file found')
+  
   xlsx_file = flask.request.files['xlsx']
   new_task = bg_service.upload_and_process_estate_customer_info_xlsx(
     validate_object_id(user_id),
     validate_object_id(estate_info_id),
     xlsx_file,
+    auto_create_customer_tags=auto_create_customer_tags,
+    overwrite_existing_user_by_phone=overwrite_existing_user_by_phone,
+    timezone_offset=timezone_offset,
   )
   return flask.jsonify(SchedulerTaskSchema().dump(new_task))
