@@ -16,6 +16,8 @@ class CustomerInfoService():
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
     self.collection = self.db.customerinfos
+    self.draft_collection = self.db.customerinfodrafts
+    self.import_error_collection = self.db.customerinfoimporterrors
     self.customer_tag_collection = self.db.customertags
     self.estate_info_collection = self.db.estateinfos
     if not CustomerInfoService.__loaded__:
@@ -114,6 +116,9 @@ class CustomerInfoService():
     dto["updated_at"] = datetime.now(pytz.UTC)
     dto["creator_id"] = user_id
     dto["updater_id"] = user_id
+    if type(dto.get("estate_info_id")) is ObjectId:
+      if not self.estate_info_collection.find_one({ "_id": dto["estate_info_id"]}):
+        raise werkzeug.exceptions.NotFound("estate %s not found" % str(dto["estate_info_id"]))
     if type(dto.get("customer_tags")) is list and dto["customer_tags"]:
       found_tags = { 
         tag["_id"] for tag in self.customer_tag_collection.find(
@@ -124,9 +129,6 @@ class CustomerInfoService():
       tags_diff = provided_tags - found_tags
       if len(tags_diff):
         raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
-    if type(dto.get("estate_info_id")) is ObjectId:
-      if not self.estate_info_collection.find_one({ "_id": dto["estate_info_id"]}):
-        raise werkzeug.exceptions.NotFound("estate %s not found" % str(dto["estate_info_id"]))
     inserted_id = self.collection.insert_one(dto).inserted_id
     return self.find_by_id(inserted_id)
   

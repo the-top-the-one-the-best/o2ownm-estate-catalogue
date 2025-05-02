@@ -4,7 +4,7 @@ import os
 import pytz
 import traceback
 from datetime import datetime
-from api_backend.task_function.estate_customer_info_import import process_customer_xlsx
+from api_backend.task_function.estate_customer_info_import import process_customer_xlsx_into_draft
 from constants import TaskStates, TaskTypes, enum_set
 from config import Config
 
@@ -26,8 +26,8 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
       }
     )
     try:
-      if task["task_type"] == TaskTypes.import_customer_xlsx:
-        result = process_customer_xlsx(task)
+      if task["task_type"] == TaskTypes.import_customer_xlsx_to_draft:
+        result = process_customer_xlsx_into_draft(task)
         break
       else:
         raise ValueError("task_type should be one of %s" % enum_set(TaskTypes))

@@ -1,3 +1,4 @@
+from datetime import datetime
 import pytz
 from marshmallow import Schema, ValidationError, fields, post_dump, post_load, pre_dump, validate, missing
 from bson import ObjectId
@@ -5,6 +6,7 @@ from api_backend.utils.mongo_helpers import generate_index_name
 from constants import (
   AuthEventTypes,
   DataTargets,
+  ImportErrorTypes,
   RoomLayouts,
   TaskStates,
   TaskTypes,
@@ -37,7 +39,11 @@ class DefaultUTCDateTime(fields.DateTime):
       value = value.replace(tzinfo=pytz.utc)  # Assign UTC to naive datetimes
     return super()._serialize(value, attr, obj, **kwargs)
   def _deserialize(self, value, attr, data, **kwargs):
-    dt = super()._deserialize(value, attr, data, **kwargs)
+    dt = None
+    if type(value) is datetime:
+      dt = value
+    else:
+      dt = super()._deserialize(value, attr, data, **kwargs)
     if dt.tzinfo is None:  # If incoming datetime has no timezone, assume UTC
       return dt.replace(tzinfo=pytz.utc)
     return dt  # Otherwise, return as-is
@@ -225,13 +231,30 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   @post_dump
   def post_dump_handler(self, data, **kwargs):
     return self.__arrange_data__(data)
-
+  
+class CustomerInfoErrorSchema(MongoDefaultDocumentSchema):
+  insert_task_id = fields.ObjectId()
+  line_number = fields.Integer()
+  field_name = fields.String()
+  field_header = fields.String()
+  field_value = fields.String()
+  error_type = fields.String(
+    validate=validate.OneOf(enum_set(ImportErrorTypes)),
+    metadata={ "example": ImportErrorTypes.format_error },
+  )
+  
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
   estate_info_id = fields.ObjectId()
   name = fields.String(missing="")
   title_pronoun = fields.String(missing="")
-  phone = fields.String(missing="")
-  email = fields.String(validate=lambda x: x == "" or validate.Email())
+  phone = fields.String(
+    required=True,
+    validate=validate.Regexp("^\+?[\d\s\-().]{7,20}$", error="Invalid phone format."),
+  )
+  email = fields.String(
+    validate=lambda value: validate.Email()(value) if value else True,
+    metadata={"example": "alexchiu@bclab.ai"}
+  )
   room_layouts = fields.List(
     fields.String(validate=validate.OneOf(enum_set(RoomLayouts))),
     metadata={ "example": [RoomLayouts.layout_2, RoomLayouts.layout_3] },

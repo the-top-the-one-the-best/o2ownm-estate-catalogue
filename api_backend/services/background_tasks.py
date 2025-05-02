@@ -66,7 +66,7 @@ class BackgroundTaskService():
     task_id = bson.ObjectId()
     task_entry.update(
       _id = task_id,
-      task_type = constants.TaskTypes.import_customer_xlsx,
+      task_type = constants.TaskTypes.import_customer_xlsx_to_draft,
       state = constants.TaskStates.pending,
       creator_id = user_id,
       trial = 0,

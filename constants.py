@@ -59,6 +59,11 @@ class Permission:
   full = "rw"
   none = ""
 
+class ImportErrorTypes:
+  format_error = "format_error"
+  missing = "missing"
+  invalid_value = "invalid_value"
+
 class RoomLayouts:
   layout_1 = "1"
   layout_2 = "2"
@@ -67,7 +72,8 @@ class RoomLayouts:
   layout_5_or_more = "5"
   
 class TaskTypes:
-  import_customer_xlsx = "import_customer_xlsx"
+  import_customer_xlsx_to_draft = "import_customer_xlsx_to_draft"
+  import_customer_xlsx_to_live = "import_customer_xlsx_to_live"
   export_customer_xlsx = "export_customer_xlsx"
 
 class TaskStates:
@@ -81,7 +87,7 @@ def enum_set(c):
     [value for key, value in c.__dict__.items() if not key.startswith("_")]
   )
 
-CUSTOMER_XLSX_HEADER_MAP = {
+CUSTOMER_XLSX_HEADER_FIELD_MAP = {
   "姓名": "name",
   "頭銜/稱謂": "title_pronoun",
 
@@ -94,4 +100,9 @@ CUSTOMER_XLSX_HEADER_MAP = {
   "客戶標籤": "customer_tags",
 
   "填單日": "info_date",
+}
+
+CUSTOMER_XLSX_FIELD_HEADER_MAP = {
+  field: header 
+  for header, field in CUSTOMER_XLSX_HEADER_FIELD_MAP.items()
 }
