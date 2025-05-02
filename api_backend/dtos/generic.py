@@ -11,7 +11,7 @@ except:
   fields.ObjectId = ObjectIdHelper
 
 # general  
-class GeneralInsertIdDto(MongoDefaultDocumentSchema):
+class GenericInsertIdDto(MongoDefaultDocumentSchema):
   _id = fields.String()
 
 from typing import TypeVar, Type
@@ -31,7 +31,7 @@ def create_page_result_dto(item_schema: Type[Schema]):
   PageResultDto.__name__ = PageResultDto.__name__ + "<" + item_schema.__name__ + ">"
   return PageResultDto
 
-class GeneralPagedQueryDto(Schema):
+class GenericPagedQueryDto(Schema):
   count_matched = fields.Boolean(missing=False, default=False)
   page_size = fields.Integer(
     missing=20,
@@ -43,3 +43,8 @@ class GeneralPagedQueryDto(Schema):
     validate=[Range(min=1, error="Value must >= 1")],
     metadata={ "example":  1 },
   )
+
+class GenericMatchCountDto(Schema):
+  grouped_fields = fields.List(fields.String)
+  matched_count = fields.Integer(missing=0)
+  distinct_matched_count = fields.Integer(missing=0)

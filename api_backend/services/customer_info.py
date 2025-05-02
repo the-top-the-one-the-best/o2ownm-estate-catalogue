@@ -23,10 +23,10 @@ class CustomerInfoService():
       for index in (CustomerInfoSchema.MongoMeta.index_list):
         build_mongo_index(self.collection, index)
 
-  def __query_by_filter__(self, query_dto):
+  def __build_match_filter__(self, query_dto):
     match_filter = {}
-    if query_dto.get("estate_info_id"):
-      match_filter["estate_info_id"] = query_dto["estate_info_id"]
+    if type(query_dto.get("estate_info_ids")) is list and query_dto.get("estate_info_ids"):
+      match_filter["estate_info_id"] = { "$in": query_dto["estate_info_ids"] }
     if type(query_dto.get("room_layouts")) is list and query_dto["room_layouts"]:
       match_filter["room_layouts"] = { "$all": query_dto["room_layouts"] }
     if type(query_dto.get("room_size")) is dict and query_dto["room_size"]:
@@ -42,7 +42,51 @@ class CustomerInfoService():
       ]
     if type(query_dto.get("customer_tags")) is list and query_dto["customer_tags"]:
       match_filter["customer_tags"] = { "$all": query_dto["customer_tags"] }
+    return match_filter
 
+  def count_by_filter(self, query_dto, grouped_fields=["phone"]):
+    match_filter = self.__build_match_filter__(query_dto)
+    agg_stages = []
+    if match_filter:
+      agg_stages.append({"$match": match_filter})
+    facet_stage = { "matched_count": [ { "$count": "count" } ] }
+    distinct_flag = type(grouped_fields) is list and len(grouped_fields)
+    if distinct_flag:
+      grouped_fields = [
+        field.strip() if field.strip().startswith("$") else "$" + field.strip()
+        for field in grouped_fields if type(field) is str and field.strip()
+      ]
+      facet_stage["distinct_matched_count"] = [
+        { "$group": { "_id": grouped_fields } },
+        { "$count": "count" },
+      ]
+    agg_stages.append({ "$facet": facet_stage})
+    project_stage = {
+      "matched_count": { "$ifNull": [ { "$arrayElemAt": ["$matched_count.count", 0] }, 0 ] },
+    }
+    if distinct_flag:
+      project_stage["distinct_matched_count"] = {
+        "$ifNull": [ { "$arrayElemAt": ["$distinct_matched_count.count", 0] }, 0 ]
+      }
+    agg_stages.append({ "$project": project_stage})
+
+    print (agg_stages)
+    results = list(self.collection.aggregate(agg_stages))
+    result = results[0] if results else {}
+    result["grouped_fields"] = grouped_fields if distinct_flag else []
+    if type(result.get("matched_count")) is int and not result.get("distinct_matched_count"):
+      result["distinct_matched_count"] = result["matched_count"]
+    return result
+
+  def find_by_id(self, _id):
+    result = self.collection.find_one({"_id": _id})
+    if not result:
+      raise werkzeug.exceptions.NotFound
+    return result
+  
+  def query_by_filter(self, query_dto):
+    # paged_result, has_more, matched_count = self.__query_by_filter__(query_dto)
+    match_filter = self.__build_match_filter__(query_dto)
     page_size = query_dto.get('page_size')
     page_number = query_dto.get('page_number')
     agg_stages = []
@@ -55,19 +99,9 @@ class CustomerInfoService():
     agg_stages.append({'$skip': page_size * (page_number-1)})
     agg_stages.append({'$limit': page_size + 1})
     results = list(self.collection.aggregate(agg_stages))
-    return results[:page_size], bool(len(results) > page_size), matched_count
-
-  def find_by_id(self, _id):
-    result = self.collection.find_one({"_id": _id})
-    if not result:
-      raise werkzeug.exceptions.NotFound
-    return result
-  
-  def query_by_filter(self, query_dto):
-    paged_result, has_more, matched_count = self.__query_by_filter__(query_dto)
     result = {
-      "results": paged_result,
-      "has_more": has_more,
+      "results": results[:page_size],
+      "has_more": bool(len(results) > page_size),
       "page_size": query_dto.get("page_size"),
       "page_number": query_dto.get("page_number"),
     }

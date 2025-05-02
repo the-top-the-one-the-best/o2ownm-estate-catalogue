@@ -1,4 +1,4 @@
-from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
+from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
 from api_backend.schemas import (
   UserPermissionSchema,
   UserSchema,
@@ -47,7 +47,7 @@ class RequestResetPasswordDto(Schema):
       data["email"] = data["email"].strip().lower()
     return data
 
-class UserQueryDto(GeneralPagedQueryDto):
+class UserQueryDto(GenericPagedQueryDto):
   name = fields.String()
   email = fields.String()
 

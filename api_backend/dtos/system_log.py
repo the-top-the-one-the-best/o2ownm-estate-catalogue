@@ -1,6 +1,6 @@
 from marshmallow import EXCLUDE, fields, validate
 import pytz
-from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
+from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
 from api_backend.schemas import SystemLogSchema, ObjectIdHelper
 from constants import AuthEventTypes, DataTargets, enum_set
 
@@ -9,7 +9,7 @@ try:
 except:
   fields.ObjectId = ObjectIdHelper
   
-class QuerySystemLogDto(GeneralPagedQueryDto):
+class QuerySystemLogDto(GenericPagedQueryDto):
   user_id = fields.ObjectId()
   target_id = fields.ObjectId()
   target_types = fields.List(fields.String(validate=validate.OneOf(enum_set(DataTargets))))

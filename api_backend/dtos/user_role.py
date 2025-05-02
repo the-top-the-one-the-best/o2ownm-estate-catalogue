@@ -1,5 +1,5 @@
 from marshmallow import EXCLUDE, fields, Schema
-from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
+from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
 from api_backend.schemas import ObjectIdHelper, UserPermissionSchema, UserRoleSchema
 
 try:
@@ -12,7 +12,7 @@ class UpsertUserRoleDto(Schema):
   description = fields.String(missing="", metadata={ "example": "基礎預覽建案、客資，不能進行寫入操作" })
   permissions = fields.Nested(UserPermissionSchema)
   
-class QueryUserRoleDto(GeneralPagedQueryDto):
+class QueryUserRoleDto(GenericPagedQueryDto):
   name = fields.String()
   class Meta:
     unknown = EXCLUDE

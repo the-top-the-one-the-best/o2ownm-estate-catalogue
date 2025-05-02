@@ -1,13 +1,13 @@
 from marshmallow import EXCLUDE, fields, Schema, post_dump, post_load, validate
 import pytz
 from api_backend.dtos.estate_info import PublicEstateInfoDto
-from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
+from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
 from api_backend.schemas import CustomerInfoSchema, DistrictInfoSchema, RoomSizeSchema
 from marshmallow.validate import Range
 from constants import RoomLayouts, enum_set
 
-class QueryCustomerInfoDto(GeneralPagedQueryDto):
-  estate_info_id = fields.ObjectId()
+class FilterCustomerInfoDto(Schema):
+  estate_info_ids = fields.List(fields.ObjectId)
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   # Discrict query example:
   # 臺北市全境 + 新北市三重區 = [
@@ -17,6 +17,10 @@ class QueryCustomerInfoDto(GeneralPagedQueryDto):
   districts = fields.List(fields.Nested(DistrictInfoSchema))
   room_size = fields.Nested(RoomSizeSchema())
   customer_tags = fields.List(fields.ObjectId())
+  class Meta:
+    unknown = EXCLUDE
+
+class QueryCustomerInfoDto(FilterCustomerInfoDto, GenericPagedQueryDto):
   class Meta:
     unknown = EXCLUDE
 

@@ -1,7 +1,8 @@
 import flask
 from flask_apispec import doc, marshal_with, use_kwargs
 from flask_jwt_extended import get_jwt_identity
-from api_backend.dtos.customer_info import PagedCustomerInfoDto, PublicCustomerInfoDto, QueryCustomerInfoDto, UpsertCustomerInfoDto
+from api_backend.dtos.customer_info import FilterCustomerInfoDto, PagedCustomerInfoDto, PublicCustomerInfoDto, QueryCustomerInfoDto, UpsertCustomerInfoDto
+from api_backend.dtos.generic import GenericMatchCountDto
 from api_backend.services.customer_info import CustomerInfoService
 from api_backend.utils.auth_utils import check_permission
 from api_backend.utils.mongo_helpers import validate_object_id
@@ -43,6 +44,23 @@ def get_by_id(_id):
 def query(**query):
   result = customer_info_service.query_by_filter(query)
   return flask.jsonify(PagedCustomerInfoDto().dump(result))
+
+@blueprint.route("/count", methods=["POST"])
+@doc(
+  summary='count customer info by dto, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.read,
+  ),
+  tags=[APITags.customer_info],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@check_permission(PermissionTargets.estate_customer_info, Permission.read)
+@use_kwargs(FilterCustomerInfoDto)
+@marshal_with(GenericMatchCountDto)
+def count(**query):
+  result = customer_info_service.count_by_filter(query)
+  return flask.jsonify(GenericMatchCountDto().dump(result))
+
 
 @blueprint.route("/create", methods=["POST"])
 @doc(

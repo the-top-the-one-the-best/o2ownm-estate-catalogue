@@ -1,5 +1,5 @@
 from marshmallow import EXCLUDE, fields, Schema, post_dump, post_load, validate
-from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
+from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
 from api_backend.schemas import DistrictInfoSchema, EstateInfoSchema, ObjectIdHelper, RoomSizeSchema
 from marshmallow.validate import Range
 from constants import RoomLayouts, enum_set
@@ -37,7 +37,7 @@ class UpsertEstateInfoDto(Schema):
   def post_dump_handler(self, data, **kwargs):
     return self.__arrange_data__(data)
   
-class QueryEstateInfoDto(GeneralPagedQueryDto):
+class QueryEstateInfoDto(GenericPagedQueryDto):
   _ids = fields.List(fields.ObjectId)
   name = fields.String()
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))

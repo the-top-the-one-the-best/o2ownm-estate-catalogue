@@ -1,7 +1,7 @@
 import flask
 import werkzeug.exceptions
 from flask_apispec import doc, marshal_with, use_kwargs
-from api_backend.dtos.generic import GeneralInsertIdDto, GeneralPagedQueryDto
+from api_backend.dtos.generic import GenericInsertIdDto, GenericPagedQueryDto
 from api_backend.dtos.user import (
   CreateUserDto,
   CredentialDto,
@@ -46,12 +46,12 @@ def login(**kwargs):
   tags=[APITags.user]
 )
 @use_kwargs(CredentialDto)
-@marshal_with(GeneralInsertIdDto)
+@marshal_with(GenericInsertIdDto)
 def register(**kwargs):
   raise werkzeug.exceptions.Locked("API disabled intentionally")
   credential_dto = kwargs
   return flask.jsonify(
-    GeneralInsertIdDto().dump(user_service.register(credential_dto))
+    GenericInsertIdDto().dump(user_service.register(credential_dto))
   )
 
 @blueprint.route("/logout", methods=["POST"])

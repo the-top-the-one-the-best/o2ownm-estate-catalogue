@@ -1,8 +1,8 @@
 from marshmallow import EXCLUDE, fields, Schema, post_load
 from marshmallow.validate import Length
-from api_backend.dtos.generic import GeneralPagedQueryDto, create_page_result_dto
+from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
 from api_backend.schemas import CustomerTagSchema
-class QueryCustomerTagDto(GeneralPagedQueryDto):
+class QueryCustomerTagDto(GenericPagedQueryDto):
   name = fields.String()
   is_frequently_used = fields.Boolean()
   class Meta:
