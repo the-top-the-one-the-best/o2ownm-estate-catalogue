@@ -73,7 +73,8 @@ class RoomLayouts:
   
 class TaskTypes:
   import_customer_xlsx_to_draft = "import_customer_xlsx_to_draft"
-  import_customer_xlsx_to_live = "import_customer_xlsx_to_live"
+  import_customer_draft_to_live = "import_customer_draft_to_live"
+  discard_customer_xlsx_import_draft = "discard_customer_xlsx_import_draft"
   export_customer_xlsx = "export_customer_xlsx"
 
 class TaskStates:

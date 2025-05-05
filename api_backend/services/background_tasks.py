@@ -1,6 +1,8 @@
 import multiprocessing
 import pymongo
 import pytz
+from api_backend.schemas import CustomerInfoErrorSchema
+from api_backend.services.customer_info import CustomerInfoService
 from api_backend.services.estate_info import EstateInfoService
 from api_backend.task_function.workers import process_task
 import constants
@@ -9,7 +11,7 @@ import bson
 import werkzeug.exceptions
 from config import Config
 from datetime import datetime
-
+IMPORT_ERROR_DISPLAY_LIMIT = 200
 class BackgroundTaskService():
   def __init__(
       self,
@@ -22,6 +24,7 @@ class BackgroundTaskService():
     self.db = self.mongo_client.get_database()
     self.collection = self.db.bgtasks
     self.estate_service = EstateInfoService()
+    self.customer_info_service = CustomerInfoService()
     os.makedirs(self.upload_path, exist_ok=True)
     return
   
@@ -38,13 +41,63 @@ class BackgroundTaskService():
       except:
         return
   
-  def upload_and_process_estate_customer_info_xlsx(
+  def approve_customer_info_import_task_by_id(
+    self,
+    user_id,
+    import_to_draft_task_id,
+  ):
+    task_entry = {}
+    task_id = bson.ObjectId()
+    task_entry.update(
+      _id = task_id,
+      task_type = constants.TaskTypes.import_customer_draft_to_live,
+      state = constants.TaskStates.pending,
+      creator_id = user_id,
+      trial = 0,
+      params = { "processed_task_id": import_to_draft_task_id },
+      messages = '',
+      system_pid = 0,
+      created_at = datetime.now(pytz.UTC),
+      run_at = None,
+      finished_at = None,
+    )
+    self.collection.insert_one(task_entry)
+    # process task
+    process = multiprocessing.Process(target=process_task, args=(task_id, ))
+    process.start()
+    return task_entry
+  
+  def reject_customer_info_import_task_by_id(
+    self,
+    user_id,
+    import_to_draft_task_id,
+  ):
+    task_entry = {}
+    task_id = bson.ObjectId()
+    task_entry.update(
+      _id = task_id,
+      task_type = constants.TaskTypes.discard_customer_xlsx_import_draft,
+      state = constants.TaskStates.pending,
+      creator_id = user_id,
+      trial = 0,
+      params = { "processed_task_id": import_to_draft_task_id },
+      messages = '',
+      system_pid = 0,
+      created_at = datetime.now(pytz.UTC),
+      run_at = None,
+      finished_at = None,
+    )
+    self.collection.insert_one(task_entry)
+    # process task
+    process = multiprocessing.Process(target=process_task, args=(task_id, ))
+    process.start()
+    return task_entry
+  
+  def import_customer_xlsx_to_draft(
     self,
     user_id,
     estate_info_id,
     xlsx_file,
-    auto_create_customer_tags=False,
-    overwrite_existing_user_by_phone=False,
     timezone_offset=+8,
   ):
     if xlsx_file.filename == '':
@@ -74,8 +127,6 @@ class BackgroundTaskService():
         "original_file_name": xlsx_file.filename,
         "fs_path": final_file_path,
         "estate_info_id": estate_info_id,
-        "auto_create_customer_tags": auto_create_customer_tags,
-        "overwrite_existing_user_by_phone": overwrite_existing_user_by_phone,
         "timezone_offset": timezone_offset,
       },
       messages = '',
@@ -83,9 +134,9 @@ class BackgroundTaskService():
       created_at = datetime.now(pytz.UTC),
       run_at = None,
       finished_at = None,
+      extra_info = { "imported_to_live": False },
     )
     self.collection.insert_one(task_entry)
-
     # process task
     process = multiprocessing.Process(target=process_task, args=(task_id, ))
     process.start()
@@ -95,4 +146,17 @@ class BackgroundTaskService():
     target = self.collection.find_one({ "_id": _id })
     if not target:
       raise werkzeug.exceptions.NotFound()
+    if target.get("task_type") == constants.TaskTypes.import_customer_xlsx_to_draft:
+      # fetch import error
+      import_error_previews = list(
+        self.customer_info_service.import_error_collection.find(
+          { "insert_task_id": _id },
+          { "_id": 0 , "insert_task_id": 0 },
+        ).limit(IMPORT_ERROR_DISPLAY_LIMIT)
+      )
+      __error_schema = CustomerInfoErrorSchema(many=True)
+      target_extra_info = target.get("extra_info") or {}
+      target_extra_info["import_error_previews"] = __error_schema.dump(import_error_previews)
+      target_extra_info["import_error_previews_limit"] = IMPORT_ERROR_DISPLAY_LIMIT
+      target["extra_info"] = target_extra_info
     return target

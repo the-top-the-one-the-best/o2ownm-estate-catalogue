@@ -78,7 +78,13 @@ class CustomerTagsService():
     if not result:
       raise werkzeug.exceptions.NotFound
     # update customer info tags field
-    self.customer_info_collection.update_many(
+    from api_backend.services.customer_info import CustomerInfoService
+    customer_service = CustomerInfoService()
+    customer_service.collection.update_many(
+      { "customer_tags": _id },
+      { "$pull": { "customer_tags": _id } },
+    )
+    customer_service.draft_collection.update_many(
       { "customer_tags": _id },
       { "$pull": { "customer_tags": _id } },
     )

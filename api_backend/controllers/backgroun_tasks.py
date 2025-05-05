@@ -26,35 +26,68 @@ def get_task_by_id(task_id):
   target_task = bg_service.get_task_by_id(validate_object_id(task_id))
   return flask.jsonify(SchedulerTaskSchema().dump(target_task))
 
-@blueprint.route('/customer_info_xlsx/estate_info_id/<estate_info_id>', methods=['POST'])
+@blueprint.route('/customer_info_xlsx/draft/estate_info_id/<estate_info_id>', methods=['POST'])
 @check_permission(PermissionTargets.estate_customer_info, Permission.write)
 @doc(
-  summary='upload customer info excel for estate by estate id, permission <%s:%s> required' % (
+  summary='upload customer info excel by estate id into draft, permission <%s:%s> required' % (
     PermissionTargets.estate_customer_info,
     Permission.write,
   ),
   tags=[APITags.file_ops],
   security=[Config.JWT_SECURITY_OPTION],
 )
-
 @use_kwargs(EstateCustomerInfoImportOptionDto, location="query")
 @use_kwargs(XlsxUploadDto, location="files")
 @marshal_with(SchedulerTaskSchema)
 def upload_and_process_estate_customer_info_xlsx(estate_info_id, **kwargs):
   user_id = get_jwt_identity()
-  auto_create_customer_tags = bool(kwargs.get("auto_create_customer_tags"))
-  overwrite_existing_user_by_phone = bool(kwargs.get("overwrite_existing_user_by_phone"))
   timezone_offset = int(kwargs.get("timezone_offset"))
   if 'xlsx' not in flask.request.files:
     raise werkzeug.exceptions.BadRequest('no file found')
   
   xlsx_file = flask.request.files['xlsx']
-  new_task = bg_service.upload_and_process_estate_customer_info_xlsx(
+  new_task = bg_service.import_customer_xlsx_to_draft(
     validate_object_id(user_id),
     validate_object_id(estate_info_id),
     xlsx_file,
-    auto_create_customer_tags=auto_create_customer_tags,
-    overwrite_existing_user_by_phone=overwrite_existing_user_by_phone,
     timezone_offset=timezone_offset,
+  )
+  return flask.jsonify(SchedulerTaskSchema().dump(new_task))
+
+@blueprint.route('/customer_info_xlsx/approve/<draft_import_task_id>', methods=['POST'])
+@check_permission(PermissionTargets.estate_customer_info, Permission.write)
+@doc(
+  summary='approve import task by moving customer info from draft to live collection, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.write,
+  ),
+  tags=[APITags.file_ops],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@marshal_with(SchedulerTaskSchema)
+def approve_customer_info_import_task_by_id(draft_import_task_id):
+  user_id = get_jwt_identity()
+  new_task = bg_service.approve_customer_info_import_task_by_id(
+    validate_object_id(user_id),
+    validate_object_id(draft_import_task_id),
+  )
+  return flask.jsonify(SchedulerTaskSchema().dump(new_task))
+
+@blueprint.route('/customer_info_xlsx/reject/<draft_import_task_id>', methods=['POST'])
+@check_permission(PermissionTargets.estate_customer_info, Permission.write)
+@doc(
+  summary='reject import task, delete drafts and import errors, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.write,
+  ),
+  tags=[APITags.file_ops],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@marshal_with(SchedulerTaskSchema)
+def reject_customer_info_import_task_by_id(draft_import_task_id):
+  user_id = get_jwt_identity()
+  new_task = bg_service.reject_customer_info_import_task_by_id(
+    validate_object_id(user_id),
+    validate_object_id(draft_import_task_id),
   )
   return flask.jsonify(SchedulerTaskSchema().dump(new_task))

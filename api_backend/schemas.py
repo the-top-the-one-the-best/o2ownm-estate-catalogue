@@ -171,6 +171,7 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   finished_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  extra_info = fields.Field()
   @pre_dump
   def pre_dump_handler(self, data, **kwargs):
     for k, v in (data.get('params') or {}).items():
@@ -242,6 +243,8 @@ class CustomerInfoErrorSchema(MongoDefaultDocumentSchema):
     validate=validate.OneOf(enum_set(ImportErrorTypes)),
     metadata={ "example": ImportErrorTypes.format_error },
   )
+  class MongoMeta:
+    index_list = [{ "insert_task_id": 1, "line_number": 1 }]
   
 class CustomerInfoSchema(MongoDefaultDocumentSchema):
   estate_info_id = fields.ObjectId()

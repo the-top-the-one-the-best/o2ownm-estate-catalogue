@@ -3,15 +3,18 @@ import pymongo
 import os
 import pytz
 import traceback
-from datetime import datetime
-from api_backend.task_function.estate_customer_info_import import process_customer_xlsx_into_draft
+from api_backend.task_function.estate_customer_info_import import (
+  discard_customer_xlsx_import_draft,
+  import_customer_draft_to_live,
+  import_customer_xlsx_to_draft,
+)
 from constants import TaskStates, TaskTypes, enum_set
 from config import Config
+from datetime import datetime
 
 def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
   mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)    
-  db = mongo_client.get_database()
-  task_col = db.get_collection(collection_name)
+  task_col = mongo_client.get_database().get_collection(collection_name)
   result = None
   for i in range(max_retrial):
     task = task_col.find_one_and_update(
@@ -27,7 +30,13 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
     )
     try:
       if task["task_type"] == TaskTypes.import_customer_xlsx_to_draft:
-        result = process_customer_xlsx_into_draft(task)
+        result = import_customer_xlsx_to_draft(task, mongo_client)
+        break
+      elif task["task_type"] == TaskTypes.import_customer_draft_to_live:
+        result = import_customer_draft_to_live(task, collection_name, mongo_client)
+        break
+      elif task["task_type"] == TaskTypes.discard_customer_xlsx_import_draft:
+        result = discard_customer_xlsx_import_draft(task, mongo_client)
         break
       else:
         raise ValueError("task_type should be one of %s" % enum_set(TaskTypes))

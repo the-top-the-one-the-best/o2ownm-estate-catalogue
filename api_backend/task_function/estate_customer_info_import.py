@@ -5,6 +5,7 @@ import openpyxl
 import pytz
 from api_backend.schemas import CustomerInfoSchema
 from api_backend.services.resources import ResourceService
+from api_backend.utils.mongo_helpers import validate_object_id
 from constants import (
   CUSTOMER_XLSX_HEADER_FIELD_MAP,
   CUSTOMER_XLSX_FIELD_HEADER_MAP,
@@ -27,10 +28,7 @@ def create_error_entry(insert_task_id, line_number, field_name, field_header, fi
   print('import error', result, file=sys.stderr)
   return result
 
-def actual_import_from_task(task, mongo_client=None):
-  return
-
-def process_customer_xlsx_into_draft(task, mongo_client=None):
+def import_customer_xlsx_to_draft(task, mongo_client=None):
   schema = CustomerInfoSchema()
   task_id = task["_id"]
   creator_id = task.get("creator_id")
@@ -39,17 +37,15 @@ def process_customer_xlsx_into_draft(task, mongo_client=None):
   params = task["params"]
   file_path = params["fs_path"]
   estate_info_id = params["estate_info_id"]
-  auto_create_customer_tags = bool(params.get("auto_create_customer_tags"))
-  overwrite_existing_user_by_phone = bool(params.get("overwrite_existing_user_by_phone"))
   timezone_offset = int(params.get("timezone_offset"))
 
   if not mongo_client:
-    mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)    
+    mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)
 
   workbook = openpyxl.load_workbook(file_path)
   worksheet = workbook.active
   headers = [str(cell.value).strip() for cell in worksheet[1]]
-  # Ensure all headers exist in the mapping
+  # create headers-fields mapping
   column_map = {
     index: CUSTOMER_XLSX_HEADER_FIELD_MAP.get(header, None)
     for index, header in enumerate(headers)
@@ -108,14 +104,6 @@ def process_customer_xlsx_into_draft(task, mongo_client=None):
           found_tag_id = __customer_tag_name_id_map.get(tag_name)
           if found_tag_id:
             found_tag_ids.append(found_tag_id)
-          elif auto_create_customer_tags:
-            new_tag = customer_tag_service.create({
-              "name": tag_name,
-              "description": "auto created",
-              "is_frequently_used": False,
-            })
-            __customer_tag_name_id_map[tag_name] = new_tag["_id"]
-            found_tag_ids.append(new_tag["_id"])
           else:
             row_error_list.append(
               create_error_entry(
@@ -222,7 +210,7 @@ def process_customer_xlsx_into_draft(task, mongo_client=None):
       if not row_error_list:
         data_list.append(data)
 
-  # Insert into MongoDB
+  # insert into draft collection
   from api_backend.services.customer_info import CustomerInfoService
   customer_info_service = CustomerInfoService(mongo_client=mongo_client)
   i = 0
@@ -240,3 +228,54 @@ def process_customer_xlsx_into_draft(task, mongo_client=None):
     customer_info_service.import_error_collection.insert_many(batch)
     i += BATCH_SIZE
   return "%d records processed, %d error found" % (len(data_list), len(error_list))
+
+def import_customer_draft_to_live(task, task_collection_name, mongo_client=None):
+  # load task parameters
+  params = task["params"]
+  processed_task_id = validate_object_id(params.get("processed_task_id"))
+  if not mongo_client:
+    mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)
+  from api_backend.services.customer_info import CustomerInfoService
+  customer_info_service = CustomerInfoService(mongo_client=mongo_client)
+  insert_count = 0
+  # bactch moving from draft to live
+  while True:
+    batch = list(customer_info_service.draft_collection.find(
+      { "insert_task_id": processed_task_id },
+    ).limit(BATCH_SIZE))
+    if not batch:
+      break
+    insert_count += len(batch)
+    customer_info_service.collection.insert_many(batch)
+    ids = [doc["_id"] for doc in batch]
+    customer_info_service.draft_collection.delete_many({"_id": {"$in": ids}})
+    
+  # user approve imported data, remove import errors
+  customer_info_service.import_error_collection.delete_many(
+    { "insert_task_id": processed_task_id },
+  )
+  # update status of import to draft task
+  mongo_client.get_database().get_collection(task_collection_name).update_one(
+    { "_id": processed_task_id },
+    { "$set": { "extra_info.imported_to_live": True } },
+  )
+  return "%d records inserted" % (insert_count, )
+
+def discard_customer_xlsx_import_draft(task, mongo_client=None):
+  # load task parameters
+  params = task["params"]
+  processed_task_id = validate_object_id(params.get("processed_task_id"))
+  if not mongo_client:
+    mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)
+  from api_backend.services.customer_info import CustomerInfoService
+  customer_info_service = CustomerInfoService(mongo_client=mongo_client)
+  import_error_deletion_result = customer_info_service.import_error_collection.delete_many(
+    { "insert_task_id": processed_task_id },
+  )
+  draft_deletion_result = customer_info_service.draft_collection.delete_many(
+    { "insert_task_id": processed_task_id },
+  )
+  return "%d drafts deleted, %d errors deleted" % (
+    draft_deletion_result.deleted_count,
+    import_error_deletion_result.deleted_count,
+  )
