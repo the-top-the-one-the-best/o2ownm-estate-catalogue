@@ -154,7 +154,7 @@ class BackgroundTaskService():
     os.makedirs(file_dir_final, exist_ok=True)
     file_name = '%s.xlsx' % (str(task_id))
     final_file_path = os.path.join(file_dir_final, '%s' % (file_name, ))
-    relative_url = os.path.join("/", str(user_id), file_name)
+    relative_url = os.path.join("/", Config.FS_UPLOAD_FOLDER_NAME, str(user_id), file_name)
     task_entry.update(
       _id = task_id,
       task_type = constants.TaskTypes.export_customer_xlsx,
