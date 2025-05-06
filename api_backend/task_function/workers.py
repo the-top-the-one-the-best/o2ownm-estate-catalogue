@@ -3,6 +3,7 @@ import pymongo
 import os
 import pytz
 import traceback
+from api_backend.task_function.estate_customer_info_export import export_customer_xlsx
 from api_backend.task_function.estate_customer_info_import import (
   discard_customer_xlsx_import_draft,
   import_customer_draft_to_live,
@@ -37,6 +38,9 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
         break
       elif task["task_type"] == TaskTypes.discard_customer_xlsx_import_draft:
         result = discard_customer_xlsx_import_draft(task, mongo_client)
+        break
+      elif task["task_type"] == TaskTypes.export_customer_xlsx:
+        result = export_customer_xlsx(task, mongo_client)
         break
       else:
         raise ValueError("task_type should be one of %s" % enum_set(TaskTypes))

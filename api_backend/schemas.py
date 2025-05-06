@@ -183,6 +183,7 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
     metadata={
       "example": {
         "import_error_previews_limit": 200,
+        "imported_to_live": False,
         "import_error_previews": [
           {
             "line_number" : 2,
@@ -212,7 +213,7 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   @pre_dump
   def pre_dump_handler(self, data, **kwargs):
     if "extra_info" in data:
-      data["extra_info"] = serialize_fields_Field(data["params"])
+      data["extra_info"] = serialize_fields_Field(data["extra_info"])
     if "params" in data:
       data["params"] = serialize_fields_Field(data["params"])
     if "result" in data:

@@ -94,7 +94,6 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
               error_type=ImportErrorTypes.invalid_value,
             )
           )
-          
         data[field_name] = list(room_layout_set)
       elif field_name == "customer_tags" and value:
         found_tag_ids = []

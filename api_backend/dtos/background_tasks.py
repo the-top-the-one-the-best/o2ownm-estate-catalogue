@@ -5,3 +5,6 @@ class XlsxUploadDto(Schema):
 
 class EstateCustomerInfoImportOptionDto(Schema):
   timezone_offset = fields.Integer(missing=+8)
+
+class EstateCustomerInfoExportOptionDto(Schema):
+  timezone_offset = fields.Integer(missing=+8)

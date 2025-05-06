@@ -110,13 +110,13 @@ class BackgroundTaskService():
       )
     self.estate_service.find_by_id(estate_info_id)
     file_dir_final = os.path.join(self.upload_path, str(user_id))
+    task_id = bson.ObjectId()
     os.makedirs(file_dir_final, exist_ok=True)
-    file_name = '%s' % (str(bson.ObjectId()))
+    file_name = '%s' % (str(task_id))
     file_ext = constants.XLSX_MIME_TYPES[xlsx_file.mimetype]
     final_file_path = os.path.join(file_dir_final, '%s.%s' % (file_name, file_ext))
     xlsx_file.save(final_file_path)
     task_entry = {}
-    task_id = bson.ObjectId()
     task_entry.update(
       _id = task_id,
       task_type = constants.TaskTypes.import_customer_xlsx_to_draft,
@@ -135,6 +135,38 @@ class BackgroundTaskService():
       run_at = None,
       finished_at = None,
       extra_info = { "imported_to_live": False },
+    )
+    self.collection.insert_one(task_entry)
+    # process task
+    process = multiprocessing.Process(target=process_task, args=(task_id, ))
+    process.start()
+    return task_entry
+
+  def export_customer_info_by_filter(
+    self,
+    user_id,
+    query_dto,
+  ):
+    task_entry = {}
+    task_id = bson.ObjectId()
+    timezone_offset = int(query_dto.pop("timezone_offset"))
+    file_dir_final = os.path.join(self.upload_path, str(user_id))
+    os.makedirs(file_dir_final, exist_ok=True)
+    file_name = '%s.xlsx' % (str(task_id))
+    final_file_path = os.path.join(file_dir_final, '%s' % (file_name, ))
+    relative_url = os.path.join("/", str(user_id), file_name)
+    task_entry.update(
+      _id = task_id,
+      task_type = constants.TaskTypes.export_customer_xlsx,
+      state = constants.TaskStates.pending,
+      creator_id = user_id,
+      trial = 0,
+      params = { "filter": query_dto, "timezone_offset": timezone_offset, "fs_path": final_file_path, "rel_url": relative_url },
+      result = {},
+      system_pid = 0,
+      created_at = datetime.now(pytz.UTC),
+      run_at = None,
+      finished_at = None,
     )
     self.collection.insert_one(task_entry)
     # process task

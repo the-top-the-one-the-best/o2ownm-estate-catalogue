@@ -1,7 +1,8 @@
 import flask
 import werkzeug.exceptions
 from flask_apispec import doc, marshal_with, use_kwargs
-from api_backend.dtos.background_tasks import EstateCustomerInfoImportOptionDto, XlsxUploadDto
+from api_backend.dtos.background_tasks import EstateCustomerInfoExportOptionDto, EstateCustomerInfoImportOptionDto, XlsxUploadDto
+from api_backend.dtos.customer_info import FilterCustomerInfoDto
 from api_backend.schemas import SchedulerTaskSchema
 from api_backend.services.background_tasks import BackgroundTaskService
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -89,5 +90,27 @@ def reject_customer_info_import_task_by_id(draft_import_task_id):
   new_task = bg_service.reject_customer_info_import_task_by_id(
     validate_object_id(user_id),
     validate_object_id(draft_import_task_id),
+  )
+  return flask.jsonify(SchedulerTaskSchema().dump(new_task))
+
+@blueprint.route('/customer_info_xlsx/export_by_filter', methods=['POST'])
+@check_permission(PermissionTargets.estate_customer_info, Permission.read)
+@doc(
+  summary='export customer info, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.read,
+  ),
+  tags=[APITags.file_ops],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@use_kwargs(EstateCustomerInfoExportOptionDto, location="query")
+@use_kwargs(FilterCustomerInfoDto)
+@marshal_with(SchedulerTaskSchema)
+def export_customer_info_by_filter(**kwargs):
+  user_id = get_jwt_identity()
+  query_dto = kwargs
+  new_task = bg_service.export_customer_info_by_filter(
+    validate_object_id(user_id),
+    query_dto,
   )
   return flask.jsonify(SchedulerTaskSchema().dump(new_task))

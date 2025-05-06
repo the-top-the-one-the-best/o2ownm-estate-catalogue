@@ -107,3 +107,9 @@ CUSTOMER_XLSX_FIELD_HEADER_MAP = {
   field: header 
   for header, field in CUSTOMER_XLSX_HEADER_FIELD_MAP.items()
 }
+
+CUSTOMER_XLSX_EXPORT_FIELD_HEADER_MAP = {
+  "name": "姓名",
+  "title_pronoun": "頭銜/稱謂",
+  "phone": "電話",
+}

@@ -89,6 +89,31 @@ class CustomerInfoService():
       raise werkzeug.exceptions.NotFound
     return result
   
+  def query_export_cursor(self, query_dto, grouped_fields=["phone"]):
+    match_filter = self.__build_match_filter__(query_dto)
+    agg_stages = []
+    if match_filter:
+      agg_stages.append({ "$match": match_filter })
+    sort_fields = {}
+    if type(grouped_fields) is list and grouped_fields:
+      for grouped_field in grouped_fields:
+        sort_fields[grouped_field] = 1
+    sort_fields["updated_at"] = -1
+    sort_fields["created_at"] = -1
+    agg_stages.append({ "$sort": sort_fields })
+    if type(grouped_fields) is list and grouped_fields:
+      agg_stages.append({
+        "$group": {
+          "_id": [
+            field.strip() if field.strip().startswith("$") else "$" + field.strip()
+            for field in grouped_fields if type(field) is str and field.strip()
+          ],
+          "doc": { "$first": "$$ROOT" },
+        }
+      })
+      agg_stages.append({ "$replaceRoot": { "newRoot": "$doc" }})
+    return self.collection.aggregate(agg_stages)
+
   def query_by_filter(self, query_dto):
     # paged_result, has_more, matched_count = self.__query_by_filter__(query_dto)
     match_filter = self.__build_match_filter__(query_dto)
