@@ -174,7 +174,7 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   creator_id = fields.ObjectId()
   trial = fields.Integer(missing=0, default=0)
   params = fields.Field()
-  messages = fields.String()
+  result = fields.Field()
   system_pid = fields.Integer(missing=None)
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
@@ -215,6 +215,8 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
       data["extra_info"] = serialize_fields_Field(data["params"])
     if "params" in data:
       data["params"] = serialize_fields_Field(data["params"])
+    if "result" in data:
+      data["result"] = serialize_fields_Field(data["result"])
     return data
 
 class EstateTagSchema(MongoDefaultDocumentSchema):

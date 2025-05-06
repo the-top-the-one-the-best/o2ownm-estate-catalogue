@@ -146,7 +146,18 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
             )
             
     # check entry has necessary infos
-    if data.get("phone") and data.get("name"):
+    if data and not data.get("phone"):
+      row_error_list.append(
+        create_error_entry(
+          insert_task_id=task_id,
+          line_number=row_number,
+          field_name="phone",
+          field_header=CUSTOMER_XLSX_FIELD_HEADER_MAP.get("phone"),
+          field_value="",
+          error_type=ImportErrorTypes.missing,
+        )
+      )
+    elif data.get("phone") and data.get("name"):
       # verify district
       if {"l1_district", "l2_district"}.intersection(data):
         l1_district = data.get("l1_district") or ""
@@ -170,7 +181,6 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
                 error_type=ImportErrorTypes.invalid_value,
               )
             )
-            
         elif not target_l1 and l1_district:
           row_error_list.append(
             create_error_entry(
@@ -182,7 +192,6 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
               error_type=ImportErrorTypes.invalid_value,
             )
           )
-          
         else:
           data["l1_district"] = ""
           data["l2_district"] = ""
@@ -227,7 +236,11 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
       break
     customer_info_service.import_error_collection.insert_many(batch)
     i += BATCH_SIZE
-  return "%d records processed, %d error found" % (len(data_list), len(error_list))
+  return {
+    "message": "%d records processed, %d error found" % (len(data_list), len(error_list)),
+    "error_count": len(error_list),
+    "import_count": len(data_list),
+  }
 
 def import_customer_draft_to_live(task, task_collection_name, mongo_client=None):
   # load task parameters
@@ -259,7 +272,10 @@ def import_customer_draft_to_live(task, task_collection_name, mongo_client=None)
     { "_id": processed_task_id },
     { "$set": { "extra_info.imported_to_live": True } },
   )
-  return "%d records inserted" % (insert_count, )
+  return {
+    "message": "%d records inserted" % (insert_count, ),
+    "import_count": insert_count,
+  }
 
 def discard_customer_xlsx_import_draft(task, mongo_client=None):
   # load task parameters
@@ -275,7 +291,11 @@ def discard_customer_xlsx_import_draft(task, mongo_client=None):
   draft_deletion_result = customer_info_service.draft_collection.delete_many(
     { "insert_task_id": processed_task_id },
   )
-  return "%d drafts deleted, %d errors deleted" % (
-    draft_deletion_result.deleted_count,
-    import_error_deletion_result.deleted_count,
-  )
+  return {
+    "message": "%d drafts deleted, %d errors deleted" % (
+      draft_deletion_result.deleted_count,
+      import_error_deletion_result.deleted_count,
+    ),
+    "draft_delete_count": draft_deletion_result.deleted_count,
+    "error_delete_count": import_error_deletion_result.deleted_count,
+  }

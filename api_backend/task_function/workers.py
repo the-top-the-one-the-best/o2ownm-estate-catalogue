@@ -45,7 +45,12 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
       print(err_msg, file=sys.stderr)
       task_col.update_one(
         { "_id": task_id },
-        { "$set": { "state": TaskStates.failed, "message": err_msg } }
+        { 
+          "$set": {
+            "state": TaskStates.failed,
+            "result": { "message": str(e), "traceback": err_msg }
+          }
+        }
       )
       return
     
@@ -55,7 +60,7 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
     { 
       "$set": {
         "state": TaskStates.success,
-        "message": result,
+        "result": result,
         "finished_at": datetime.now(pytz.UTC),
       }
     }
