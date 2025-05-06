@@ -35,7 +35,7 @@ class GenericPagedQueryDto(Schema):
   count_matched = fields.Boolean(missing=False, default=False)
   page_size = fields.Integer(
     missing=20,
-    validate=[Range(min=1, max=100, error="Value must be in [1, 100]")],
+    validate=[Range(min=1, max=200)],
     metadata={ "example":  20 },
   )
   page_number = fields.Integer(
@@ -45,6 +45,6 @@ class GenericPagedQueryDto(Schema):
   )
 
 class GenericMatchCountDto(Schema):
-  grouped_fields = fields.List(fields.String)
+  grouped_fields = fields.List(fields.String(metadata={ "example": "phone" }))
   matched_count = fields.Integer(missing=0)
   distinct_matched_count = fields.Integer(missing=0)

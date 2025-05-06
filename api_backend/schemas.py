@@ -2,7 +2,7 @@ from datetime import datetime
 import pytz
 from marshmallow import Schema, ValidationError, fields, post_dump, post_load, pre_dump, validate, missing
 from bson import ObjectId
-from api_backend.utils.mongo_helpers import generate_index_name
+from api_backend.utils.marshmallow_helpers import serialize_fields_Field
 from constants import (
   AuthEventTypes,
   DataTargets,
@@ -153,15 +153,23 @@ class SystemLogSchema(MongoDefaultDocumentSchema):
   target_id = fields.ObjectId()
   target_type = fields.String(validate=validate.OneOf(enum_set(DataTargets)))
   event_type = fields.String(validate=validate.OneOf(enum_set(AuthEventTypes)))
-  event_details = fields.Dict()
+  event_details = fields.Field()
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   class MongoMeta:
     index_list = [
       { "user_id": 1, "target_id": 1, "event_type": 1, "target_type": 1, "created_at": -1 },
     ]
+  @pre_dump
+  def pre_dump_handler(self, data, **kwargs):
+    if "event_details" in data:
+      data["event_details"] = serialize_fields_Field(data["event_details"])
+    return data
 
 class SchedulerTaskSchema(MongoDefaultDocumentSchema):
-  task_type = fields.String(validate=validate.OneOf(enum_set(TaskTypes)))
+  task_type = fields.String(
+    validate=validate.OneOf(enum_set(TaskTypes)),
+    metadata={ "example": TaskTypes.import_customer_xlsx_to_draft }
+  )
   state = fields.String(validate=validate.OneOf(enum_set(TaskStates)))
   creator_id = fields.ObjectId()
   trial = fields.Integer(missing=0, default=0)
@@ -171,12 +179,42 @@ class SchedulerTaskSchema(MongoDefaultDocumentSchema):
   created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   run_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   finished_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
-  extra_info = fields.Field()
+  extra_info = fields.Field(
+    metadata={
+      "example": {
+        "import_error_previews_limit": 200,
+        "import_error_previews": [
+          {
+            "line_number" : 2,
+            "field_name" : "email",
+            "field_header" : "E-Mail",
+            "field_value" : "abc#gmail.xom",
+            "error_type" : ImportErrorTypes.format_error,
+          },
+          {
+            "line_number" : 3,
+            "field_name" : "room_layouts",
+            "field_header" : "喜好房型",
+            "field_value" : "A, B, 3",
+            "error_type" : ImportErrorTypes.invalid_value,
+          },
+          {
+            "line_number" : 3,
+            "field_name" : "customer_tags",
+            "field_header" : "客戶標籤",
+            "field_value" : "一邊玩沙",
+            "error_type" : ImportErrorTypes.invalid_value,
+          }
+        ]
+      }
+    }
+  )
   @pre_dump
   def pre_dump_handler(self, data, **kwargs):
-    for k, v in (data.get('params') or {}).items():
-      if type(v) is ObjectId:
-        data['params'][k] = str(v)
+    if "extra_info" in data:
+      data["extra_info"] = serialize_fields_Field(data["params"])
+    if "params" in data:
+      data["params"] = serialize_fields_Field(data["params"])
     return data
 
 class EstateTagSchema(MongoDefaultDocumentSchema):
@@ -235,10 +273,10 @@ class EstateInfoSchema(MongoDefaultDocumentSchema):
   
 class CustomerInfoErrorSchema(MongoDefaultDocumentSchema):
   insert_task_id = fields.ObjectId()
-  line_number = fields.Integer()
-  field_name = fields.String()
-  field_header = fields.String()
-  field_value = fields.String()
+  line_number = fields.Integer(metadata={ "example": 2 })
+  field_name = fields.String(metadata={ "example": "email" })
+  field_header = fields.String(metadata={ "example": "E-mail" })
+  field_value = fields.String(metadata={ "example": "xyz.zbc#gmail.xom" })
   error_type = fields.String(
     validate=validate.OneOf(enum_set(ImportErrorTypes)),
     metadata={ "example": ImportErrorTypes.format_error },
