@@ -258,10 +258,17 @@ def import_customer_draft_to_live(task, task_collection_name, mongo_client=None)
     if not batch:
       break
     insert_count += len(batch)
-    customer_info_service.collection.insert_many(batch)
+    replace_one_batch = [
+      pymongo.ReplaceOne(
+        { "estate_info_id": elem["estate_info_id"], "phone": elem["phone"] },
+        { k: v for k, v in elem.items() if k != "_id" },
+        upsert=True,
+      ) for elem in batch
+    ]
+    customer_info_service.collection.bulk_write(replace_one_batch)
     ids = [doc["_id"] for doc in batch]
     customer_info_service.draft_collection.delete_many({"_id": {"$in": ids}})
-    
+
   # user approve imported data, remove import errors
   customer_info_service.import_error_collection.delete_many(
     { "insert_task_id": processed_task_id },
