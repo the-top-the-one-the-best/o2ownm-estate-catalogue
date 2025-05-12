@@ -43,7 +43,17 @@ class HomepageStatsService():
         } 
       }
     })
-    return list(self.customer_info_collection.aggregate(agg_stages))
+    results = list(self.customer_info_collection.aggregate(agg_stages))
+    if len(results) < limit:
+      remaining_length = limit - len(results)
+      pads = self.estate_info_collection.find(
+        { "_id": { "$nin": [item["_id"] for item in results] } },
+        { "_id": 1, "name": 1 }
+      ).limit(remaining_length)
+      for item in pads:
+        item["customer_info_count"] = 0
+        results.append(item)
+    return results
   
   def get_region_ranked_by_estate_count(self):
     results = []
