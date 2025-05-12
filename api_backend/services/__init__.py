@@ -5,6 +5,7 @@ from . import (
   email_notification,
   estate_info,
   estate_tags,
+  homepage_stats,
   resources,
   system_log,
   user,

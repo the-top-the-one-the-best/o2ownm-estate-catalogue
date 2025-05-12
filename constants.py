@@ -20,6 +20,7 @@ class APITags:
   root = "系統 Root"
   system_log = "系統 Log"
   user = "帳戶"
+  homepage_stats = "首頁統計 API"
 
 class AuthEventTypes:
   admin_create_user = "admin_create_user"

@@ -10,7 +10,14 @@ try:
 except:
   fields.ObjectId = ObjectIdHelper
 
-# general  
+# general
+class GenericRankQueryDto(Schema):
+  limit = fields.Integer(
+    missing=10,
+    validate=[Range(min=1, max=200)],
+    metadata={ "example":  10 },
+  )
+
 class GenericInsertIdDto(MongoDefaultDocumentSchema):
   _id = fields.String()
 

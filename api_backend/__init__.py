@@ -65,12 +65,14 @@ def make_app(config, for_manage) -> Flask:
   app.register_blueprint(controllers.backgroun_tasks.blueprint, url_prefix=f"{url_prefix}background_tasks")
   app.register_blueprint(controllers.resources.blueprint, url_prefix=f"{url_prefix}resources")
   app.register_blueprint(controllers.system_log.blueprint, url_prefix=f"{url_prefix}system_logs")
+  app.register_blueprint(controllers.homepage_stats.blueprint, url_prefix=f"{url_prefix}homepage_stats")
   
   # for swagger
   docs = FlaskApiSpec(app)
   bp_apispec = app.blueprints.pop("flask-apispec", None)
   bp_apispec.static_url_path = url_prefix + bp_apispec.static_url_path[1:]
   app.register_blueprint(bp_apispec)
+
   for rule_key, rule in app.url_map._rules_by_endpoint.items():
     if 'flask-apispec.' in rule_key:
       rule.reverse()

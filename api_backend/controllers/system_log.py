@@ -1,6 +1,5 @@
 import flask
 from flask_apispec import doc, marshal_with, use_kwargs
-from flask_jwt_extended import get_jwt_identity, jwt_required
 from api_backend.dtos.system_log import (
   PagedSystemLogDto,
   QuerySystemLogDto,
