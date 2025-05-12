@@ -16,5 +16,12 @@ class EstateCustomerInfoTotalCountDto(Schema):
   class Meta:
     unknown = EXCLUDE
 
-class RankedEstateInfoByCustomerInfoCount(PublicEstateInfoDto):
+class RankedEstateInfoByCustomerInfoCountDto(PublicEstateInfoDto):
   customer_info_count = fields.Integer()
+
+class RankedRegionInfoByEstateCountDto(Schema):
+  class DistrictEstateCountDto(Schema):
+    l1_district = fields.String(metadata={"example": "臺北市"})
+    estate_info_count = fields.Integer(missing=0)
+  region_name = fields.String(metadata={"example": "北部地區"})
+  restion_stats = fields.List(fields.Nested(DistrictEstateCountDto))

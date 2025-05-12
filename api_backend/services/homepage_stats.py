@@ -1,12 +1,7 @@
 import pymongo
-import bson
-import pytz
-from datetime import datetime, timedelta
-from api_backend.schemas import SystemLogSchema
-from api_backend.utils.mongo_helpers import build_mongo_index, get_mongo_period, lookup_collection
-from constants import AuthEventTypes, DataTargets
+from api_backend.utils.mongo_helpers import lookup_collection
 from config import Config
-import werkzeug.exceptions
+from constants import TW_REGIONAL_GROUPS
 
 class HomepageStatsService():
   def __init__(
@@ -24,7 +19,7 @@ class HomepageStatsService():
       "customer_info_count": self.customer_info_collection.count_documents({}),
     }
 
-  def estate_rank_by_customer_info_count(self, query_dto):
+  def get_estate_rank_by_customer_info_count(self, query_dto):
     limit = query_dto.get("limit")
     agg_stages = [
       { "$match": { "estate_info_id": { "$ne": None } } },
@@ -48,6 +43,28 @@ class HomepageStatsService():
         } 
       }
     })
-    result = list(self.customer_info_collection.aggregate(agg_stages))
-    return result
+    return list(self.customer_info_collection.aggregate(agg_stages))
   
+  def get_region_ranked_by_estate_count(self):
+    results = []
+    for region in TW_REGIONAL_GROUPS:
+      district_estate_count_map = { district: 0 for district in region["districts"] }
+      region_estate_aggs = self.estate_info_collection.aggregate([
+        { "$match": { "l1_district": { "$in": region["districts"] } } },
+        { "$group": { "_id": "$l1_district", "estate_info_count": { "$sum": 1 } } },
+      ])
+      for agg in region_estate_aggs:
+        district_estate_count_map[agg["_id"]] = int(agg["estate_info_count"] or 0)
+
+      results.append({
+        "region_name": region["region_name"],
+        "restion_stats": [
+          { "l1_district": item[0], "estate_info_count": item[1] }
+          for item in sorted(
+            district_estate_count_map.items(),
+            key=lambda item: item[1],
+            reverse=True,
+          )
+        ],
+      })
+    return results
