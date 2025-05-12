@@ -16,7 +16,9 @@ class EstateCustomerInfoTotalCountDto(Schema):
   class Meta:
     unknown = EXCLUDE
 
-class RankedEstateInfoByCustomerInfoCountDto(PublicEstateInfoDto):
+class RankedEstateInfoByCustomerInfoCountDto(Schema):
+  _id = fields.ObjectId()
+  name = fields.String()
   customer_info_count = fields.Integer()
 
 class RankedRegionInfoByEstateCountDto(Schema):
