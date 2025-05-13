@@ -183,6 +183,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
             )
         elif not target_l1 and l1_district:
           data["l1_district"] = None
+          data["l2_district"] = None
           row_error_list.append(
             create_error_entry(
               insert_task_id=task_id,
