@@ -115,7 +115,7 @@ CUSTOMER_XLSX_EXPORT_FIELD_HEADER_MAP = {
   "phone": "電話",
 }
 
-# source: https://www.ndc.gov.tw/nc_77_4402
+# source: https://www.taiwan.net.tw/m1.aspx?sNo=0001016
 TW_REGIONAL_GROUPS = [
   {
     "region_name": "北部地區",
@@ -127,14 +127,14 @@ TW_REGIONAL_GROUPS = [
   },
   {
     "region_name": "南部地區",
-    "districts": ["高雄市", "臺南市", "嘉義市", "嘉義縣", "屏東縣", "澎湖縣"],
+    "districts": ["高雄市", "臺南市", "嘉義市", "嘉義縣", "屏東縣" ],
   },
   {
     "region_name": "東部地區",
     "districts": ["花蓮縣", "臺東縣"],
   },
   {
-    "region_name": "福建省",
-    "districts": ["金門縣", "連江縣"],
+    "region_name": "離島地區",
+    "districts": ["金門縣", "連江縣", "澎湖縣"],
   },
 ]

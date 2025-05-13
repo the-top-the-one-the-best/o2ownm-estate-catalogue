@@ -1,7 +1,7 @@
 import flask
 import werkzeug.exceptions
 from flask_apispec import doc, marshal_with, use_kwargs
-from api_backend.dtos.background_tasks import EstateCustomerInfoExportOptionDto, EstateCustomerInfoImportOptionDto, XlsxUploadDto
+from api_backend.dtos.background_tasks import ApproveDraftImportOptionsDto, EstateCustomerInfoExportOptionDto, EstateCustomerInfoImportOptionDto, XlsxUploadDto
 from api_backend.dtos.customer_info import FilterCustomerInfoDto
 from api_backend.schemas import SchedulerTaskSchema
 from api_backend.services.background_tasks import BackgroundTaskService
@@ -57,6 +57,7 @@ def upload_and_process_estate_customer_info_xlsx(estate_info_id, **kwargs):
 
 @blueprint.route('/customer_info_xlsx/approve/<draft_import_task_id>', methods=['POST'])
 @check_permission(PermissionTargets.estate_customer_info, Permission.write)
+@use_kwargs(ApproveDraftImportOptionsDto)
 @doc(
   summary='approve import task by moving customer info from draft to live collection, permission <%s:%s> required' % (
     PermissionTargets.estate_customer_info,
@@ -66,11 +67,13 @@ def upload_and_process_estate_customer_info_xlsx(estate_info_id, **kwargs):
   security=[Config.JWT_SECURITY_OPTION],
 )
 @marshal_with(SchedulerTaskSchema)
-def approve_customer_info_import_task_by_id(draft_import_task_id):
+def approve_customer_info_import_task_by_id(draft_import_task_id, **kwargs):
   user_id = get_jwt_identity()
+  allow_minor_format_errors = bool(kwargs.get("allow_minor_format_errors"))
   new_task = bg_service.approve_customer_info_import_task_by_id(
     validate_object_id(user_id),
     validate_object_id(draft_import_task_id),
+    allow_minor_format_errors=allow_minor_format_errors,
   )
   return flask.jsonify(SchedulerTaskSchema().dump(new_task))
 

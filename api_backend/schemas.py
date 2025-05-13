@@ -336,6 +336,9 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   def post_dump_handler(self, data, **kwargs):
     return self.__arrange_data__(data)
 
+class CustomerInfoDraftSchema(CustomerInfoSchema):
+  _dirty = fields.Boolean(missing=False)
+
 class DistrictInfoSchema(Schema):
   l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "臺南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })

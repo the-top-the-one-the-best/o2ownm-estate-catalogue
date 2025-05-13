@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import sys
+from xmlrpc.client import boolean
 import pymongo
 import openpyxl
 import pytz
@@ -73,6 +74,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
       "updater_id": creator_id,
       "insert_task_id": task_id,
     }
+    # for each column (field)
     for index, value in enumerate(row):
       field_name = column_map.get(index)
       if not field_name:
@@ -94,7 +96,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
               error_type=ImportErrorTypes.invalid_value,
             )
           )
-        data[field_name] = list(room_layout_set)
+        data[field_name] = list(room_layout_set.intersection(__room_layout_options))
       elif field_name == "customer_tags" and value:
         found_tag_ids = []
         data[field_name] = found_tag_ids
@@ -143,7 +145,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
                 error_type=ImportErrorTypes.format_error,
               )
             )
-            
+
     # check entry has necessary infos
     if data and not data.get("phone"):
       row_error_list.append(
@@ -194,15 +196,17 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
         else:
           data["l1_district"] = ""
           data["l2_district"] = ""
-      
+      # check against schema
       error_fields = schema.validate(data)
+      __phone_has_error = False
       for error_field in error_fields:
         if error_field in { "room_layouts" }:
           continue
+        if error_field == "phone":
+          __phone_has_error = True
         field_value = str(
-          ','.join(str(x) for x in data[error_field]) 
-          if type(data[error_field]) is list
-          else data[error_field]
+          ','.join(str(x) for x in data[error_field])
+          if type(data[error_field]) is list else data[error_field]
         )
         row_error_list.append(
           create_error_entry(
@@ -215,7 +219,8 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
           )
         )
       error_list += row_error_list
-      if not row_error_list:
+      if not __phone_has_error:
+        data["_dirty"] = bool(row_error_list)
         data_list.append(data)
 
   # insert into draft collection
@@ -245,23 +250,25 @@ def import_customer_draft_to_live(task, task_collection_name, mongo_client=None)
   # load task parameters
   params = task["params"]
   processed_task_id = validate_object_id(params.get("processed_task_id"))
+  allow_minor_format_errors = bool(params.get("allow_minor_format_errors"))
   if not mongo_client:
     mongo_client = pymongo.MongoClient(Config.MONGO_MAIN_URI)
   from api_backend.services.customer_info import CustomerInfoService
   customer_info_service = CustomerInfoService(mongo_client=mongo_client)
   insert_count = 0
   # bactch moving from draft to live
+  query_filter = { "insert_task_id": processed_task_id }
+  if not allow_minor_format_errors:
+    query_filter["_dirty"] = { "$ne": True }
   while True:
-    batch = list(customer_info_service.draft_collection.find(
-      { "insert_task_id": processed_task_id },
-    ).limit(BATCH_SIZE))
+    batch = list(customer_info_service.draft_collection.find(query_filter).limit(BATCH_SIZE))
     if not batch:
       break
     insert_count += len(batch)
     replace_one_batch = [
       pymongo.ReplaceOne(
         { "estate_info_id": elem["estate_info_id"], "phone": elem["phone"] },
-        { k: v for k, v in elem.items() if k != "_id" },
+        { k: v for k, v in elem.items() if k not in { "_id", "_dirty" } },
         upsert=True,
       ) for elem in batch
     ]
@@ -270,6 +277,9 @@ def import_customer_draft_to_live(task, task_collection_name, mongo_client=None)
     customer_info_service.draft_collection.delete_many({"_id": {"$in": ids}})
 
   # user approve imported data, remove import errors
+  customer_info_service.draft_collection.delete_many(
+    { "insert_task_id": processed_task_id },
+  )
   customer_info_service.import_error_collection.delete_many(
     { "insert_task_id": processed_task_id },
   )

@@ -8,3 +8,6 @@ class EstateCustomerInfoImportOptionDto(Schema):
 
 class EstateCustomerInfoExportOptionDto(Schema):
   timezone_offset = fields.Integer(missing=+8)
+
+class ApproveDraftImportOptionsDto(Schema):
+  allow_minor_format_errors = fields.Boolean(missing=False)

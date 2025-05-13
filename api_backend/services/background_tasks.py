@@ -45,6 +45,7 @@ class BackgroundTaskService():
     self,
     user_id,
     import_to_draft_task_id,
+    allow_minor_format_errors=False,
   ):
     task_entry = {}
     task_id = bson.ObjectId()
@@ -54,8 +55,11 @@ class BackgroundTaskService():
       state = constants.TaskStates.pending,
       creator_id = user_id,
       trial = 0,
-      params = { "processed_task_id": import_to_draft_task_id },
-      result = {},
+      params = {
+        "processed_task_id": import_to_draft_task_id,
+        "allow_minor_format_errors": allow_minor_format_errors,
+      },
+      result = { },
       system_pid = 0,
       created_at = datetime.now(pytz.UTC),
       run_at = None,

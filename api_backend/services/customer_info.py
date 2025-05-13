@@ -3,7 +3,7 @@ from bson import ObjectId
 import pymongo
 import pytz
 import werkzeug.exceptions
-from api_backend.schemas import CustomerInfoErrorSchema, CustomerInfoSchema
+from api_backend.schemas import CustomerInfoDraftSchema, CustomerInfoErrorSchema, CustomerInfoSchema
 from api_backend.utils.mongo_helpers import build_mongo_index, get_district_query
 from config import Config
 
@@ -24,6 +24,7 @@ class CustomerInfoService():
       CustomerInfoService.__loaded__ = True
       for index in (CustomerInfoSchema.MongoMeta.index_list):
         build_mongo_index(self.collection, index)
+      for index in CustomerInfoDraftSchema.MongoMeta.index_list:
         build_mongo_index(self.draft_collection, index)
       for index in (CustomerInfoErrorSchema.MongoMeta.index_list):
         build_mongo_index(self.import_error_collection, index)
