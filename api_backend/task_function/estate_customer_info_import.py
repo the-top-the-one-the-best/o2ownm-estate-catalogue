@@ -158,7 +158,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
           error_type=ImportErrorTypes.missing,
         )
       )
-    elif data.get("phone") and data.get("name"):
+    elif data.get("phone"):
       # verify district
       if {"l1_district", "l2_district"}.intersection(data):
         l1_district = (data.get("l1_district") or "").replace("台", "臺")
