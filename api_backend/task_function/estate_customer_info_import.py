@@ -161,10 +161,8 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
     elif data.get("phone") and data.get("name"):
       # verify district
       if {"l1_district", "l2_district"}.intersection(data):
-        l1_district = data.get("l1_district") or ""
-        l2_district = data.get("l2_district") or ""
-        l1_district = l1_district.replace("台", "臺")
-        l2_district = l2_district.replace("台", "臺")
+        l1_district = (data.get("l1_district") or "").replace("台", "臺")
+        l2_district = (data.get("l2_district") or "").replace("台", "臺")
         target_l1 = __district_map.get(l1_district)
         if target_l1:
           data["l1_district"] = target_l1["name"]
@@ -172,6 +170,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
           if target_l2:
             data["l2_district"] = target_l2["name"]
           elif not target_l2 and l2_district:
+            data["l2_district"] = None
             row_error_list.append(
               create_error_entry(
                 insert_task_id=task_id,
@@ -183,6 +182,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
               )
             )
         elif not target_l1 and l1_district:
+          data["l1_district"] = None
           row_error_list.append(
             create_error_entry(
               insert_task_id=task_id,
@@ -194,16 +194,16 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
             )
           )
         else:
-          data["l1_district"] = ""
-          data["l2_district"] = ""
+          data["l1_district"] = None
+          data["l2_district"] = None
       # check against schema
       error_fields = schema.validate(data)
       __phone_has_error = False
       for error_field in error_fields:
+        # already handled
         if error_field in { "room_layouts" }:
           continue
-        if error_field == "phone":
-          __phone_has_error = True
+
         field_value = str(
           ','.join(str(x) for x in data[error_field])
           if type(data[error_field]) is list else data[error_field]
@@ -218,6 +218,13 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
             error_type=ImportErrorTypes.format_error,
           )
         )
+        # index field must be correct
+        if error_field == "phone":
+          __phone_has_error = True
+        elif error_field == "info_date":
+          data["info_date"] = datetime.now(pytz.UTC)
+        else:
+          data[error_field] = None
       error_list += row_error_list
       if not __phone_has_error:
         data["_dirty"] = bool(row_error_list)
