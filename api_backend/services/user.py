@@ -5,8 +5,7 @@ import pytz
 import pymongo
 import werkzeug.exceptions
 
-from bson import ObjectId
-from datetime import datetime, timedelta
+from datetime import datetime
 from api_backend.dtos.user import UpdateUserPermissionDto
 from api_backend.schemas import UserPermissionSchema, UserSchema
 from api_backend.services.email_notification import EmailService
@@ -16,10 +15,7 @@ from api_backend.utils.mongo_helpers import build_mongo_index
 from config import Config
 from passlib.hash import pbkdf2_sha256
 from constants import DataTargets, AuthEventTypes, Permission
-from flask_jwt_extended import (
-  create_access_token,
-  create_refresh_token, 
-)
+from flask_jwt_extended import create_access_token, create_refresh_token
 
 class UserService():
   __loaded__ = False

@@ -1,7 +1,13 @@
 import flask
 from flask_apispec import doc, marshal_with, use_kwargs
 from flask_jwt_extended import get_jwt_identity
-from api_backend.dtos.customer_info import FilterCustomerInfoDto, PagedCustomerInfoDto, PublicCustomerInfoDto, QueryCustomerInfoDto, UpsertCustomerInfoDto
+from api_backend.dtos.customer_info import (
+  FilterCustomerInfoDto,
+  PagedCustomerInfoDto,
+  PublicCustomerInfoDto,
+  QueryCustomerInfoDto,
+  UpsertCustomerInfoDto,
+)
 from api_backend.dtos.generic import GenericMatchCountDto
 from api_backend.services.customer_info import CustomerInfoService
 from api_backend.utils.auth_utils import check_permission

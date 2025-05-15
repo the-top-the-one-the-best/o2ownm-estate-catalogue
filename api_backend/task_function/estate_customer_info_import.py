@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import sys
-from xmlrpc.client import boolean
 import pymongo
 import openpyxl
 import pytz

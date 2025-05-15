@@ -3,7 +3,6 @@ import pytz
 from api_backend.dtos.estate_info import PublicEstateInfoDto
 from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
 from api_backend.schemas import CustomerInfoSchema, DistrictInfoSchema, RoomSizeSchema
-from marshmallow.validate import Range
 from constants import RoomLayouts, enum_set
 
 class FilterCustomerInfoDto(Schema):

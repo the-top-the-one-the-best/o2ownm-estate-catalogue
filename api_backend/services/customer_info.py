@@ -4,7 +4,11 @@ from bson import ObjectId
 import pymongo
 import pytz
 import werkzeug.exceptions
-from api_backend.schemas import CustomerInfoDraftSchema, CustomerInfoErrorSchema, CustomerInfoSchema
+from api_backend.schemas import (
+  CustomerInfoDraftSchema,
+  CustomerInfoErrorSchema,
+  CustomerInfoSchema,
+)
 from api_backend.utils.mongo_helpers import build_mongo_index, get_district_query
 from config import Config
 

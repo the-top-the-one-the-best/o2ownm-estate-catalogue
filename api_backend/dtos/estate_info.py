@@ -1,7 +1,11 @@
 from marshmallow import EXCLUDE, fields, Schema, post_dump, post_load, validate
 from api_backend.dtos.generic import GenericPagedQueryDto, create_page_result_dto
-from api_backend.schemas import DistrictInfoSchema, EstateInfoSchema, ObjectIdHelper, RoomSizeSchema
-from marshmallow.validate import Range
+from api_backend.schemas import (
+  DistrictInfoSchema,
+  EstateInfoSchema,
+  ObjectIdHelper,
+  RoomSizeSchema,
+)
 from constants import RoomLayouts, enum_set
 
 try:

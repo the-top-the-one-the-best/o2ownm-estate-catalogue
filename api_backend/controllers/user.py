@@ -1,7 +1,7 @@
 import flask
 import werkzeug.exceptions
 from flask_apispec import doc, marshal_with, use_kwargs
-from api_backend.dtos.generic import GenericInsertIdDto, GenericPagedQueryDto
+from api_backend.dtos.generic import GenericInsertIdDto
 from api_backend.dtos.user import (
   CreateUserDto,
   CredentialDto,
