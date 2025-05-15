@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from bson import ObjectId
 import pymongo
 import pytz
@@ -31,6 +32,18 @@ class CustomerInfoService():
         
   def __build_match_filter__(self, query_dto):
     match_filter = {}
+    if type(query_dto.get("name")) is str and query_dto["name"]:
+      pattern = ".*%s.*" % (query_dto["name"], )
+      pattern_regex = re.compile(pattern, re.IGNORECASE)
+      match_filter["name"] = pattern_regex
+    if type(query_dto.get("phone")) is str and query_dto["phone"]:
+      pattern = ".*%s.*" % (query_dto["phone"], )
+      pattern_regex = re.compile(pattern, re.IGNORECASE)
+      match_filter["phone"] = pattern_regex
+    if type(query_dto.get("email")) is str and query_dto["email"]:
+      pattern = ".*%s.*" % (query_dto["email"], )
+      pattern_regex = re.compile(pattern, re.IGNORECASE)
+      match_filter["email"] = pattern_regex
     if type(query_dto.get("estate_info_ids")) is list and query_dto.get("estate_info_ids"):
       match_filter["estate_info_id"] = { "$in": query_dto["estate_info_ids"] }
     if type(query_dto.get("room_layouts")) is list and query_dto["room_layouts"]:

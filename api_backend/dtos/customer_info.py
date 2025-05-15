@@ -7,6 +7,9 @@ from marshmallow.validate import Range
 from constants import RoomLayouts, enum_set
 
 class FilterCustomerInfoDto(Schema):
+  name = fields.String()
+  phone = fields.String(metadata={"example": "0987654321"})
+  email = fields.String(metadata={"example": "alexchiu@bclab.ai"})
   estate_info_ids = fields.List(fields.ObjectId)
   room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
   # Discrict query example:
