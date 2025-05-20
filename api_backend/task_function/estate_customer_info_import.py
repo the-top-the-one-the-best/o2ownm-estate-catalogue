@@ -238,6 +238,8 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
       if not __phone_has_error:
         data["_dirty"] = bool(row_error_list)
         data["phone"] = re.sub(r'\D', '', data["phone"])
+        if len(data["phone"]) == 9 and data["phone"][0] == "9":
+          data["phone"] = "886%s" % data["phone"]
         data_list.append(data)
 
   # insert into draft collection
