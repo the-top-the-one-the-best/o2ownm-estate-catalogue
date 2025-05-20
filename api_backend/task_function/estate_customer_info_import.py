@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import sys
+import re
 import pymongo
 import openpyxl
 import pytz
@@ -228,6 +229,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
       error_list += row_error_list
       if not __phone_has_error:
         data["_dirty"] = bool(row_error_list)
+        data["phone"] = re.sub(r'\D', '', data["phone"])
         data_list.append(data)
 
   # insert into draft collection

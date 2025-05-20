@@ -1,5 +1,6 @@
-from datetime import datetime
 import pytz
+import re
+from datetime import datetime
 from marshmallow import (
   Schema,
   ValidationError,
@@ -331,6 +332,8 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
       { "insert_task_id": 1 },
     ]
   def __arrange_data__(self, data):
+    if type(data.get("phone")) is str:
+      data["phone"] = re.sub(r'\D', '', data["phone"])
     if type(data.get("email")) is str:
       data["email"] = data["email"].strip().lower()
     if type(data.get("room_layouts")) is list:
