@@ -63,6 +63,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
   }
   basic_string_fields = {"name", "title_pronoun", "phone", "l1_district", "l2_district"}
   row_number = 1
+  empty_row_count = 0
   for row in worksheet.iter_rows(min_row=2, values_only=True):
     row_error_list = []
     row_number += 1
@@ -74,6 +75,12 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
       "updater_id": creator_id,
       "insert_task_id": task_id,
     }
+    empty_check_row = [field for field in row if field]
+    if len(empty_check_row) == 0:
+      empty_check_row += 1
+
+    if empty_row_count > 10:
+      break
     # for each column (field)
     for index, value in enumerate(row):
       field_name = column_map.get(index)
