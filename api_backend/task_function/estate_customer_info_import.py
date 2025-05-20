@@ -77,7 +77,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
     }
     empty_check_row = [field for field in row if field]
     if len(empty_check_row) == 0:
-      empty_check_row += 1
+      empty_row_count += 1
 
     if empty_row_count > 10:
       break
