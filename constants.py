@@ -130,11 +130,7 @@ TW_REGIONAL_GROUPS = [
     "districts": ["高雄市", "臺南市", "嘉義市", "嘉義縣", "屏東縣" ],
   },
   {
-    "region_name": "東部地區",
-    "districts": ["花蓮縣", "臺東縣"],
-  },
-  {
-    "region_name": "離島地區",
-    "districts": ["金門縣", "連江縣", "澎湖縣"],
+    "region_name": "東部與離島地區",
+    "districts": ["花蓮縣", "臺東縣", "金門縣", "連江縣", "澎湖縣"],
   },
 ]
