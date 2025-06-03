@@ -1,9 +1,10 @@
+import re
 import pymongo
 import bson
 import pytz
 from datetime import datetime, timedelta
 from api_backend.schemas import SystemLogSchema
-from api_backend.utils.mongo_helpers import build_mongo_index, get_mongo_period
+from api_backend.utils.mongo_helpers import build_mongo_index, get_mongo_period, lookup_collection
 from constants import AuthEventTypes, DataTargets
 from config import Config
 import werkzeug.exceptions
@@ -16,6 +17,7 @@ class SystemLogService():
   ):
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
+    self.user_collection = self.db.users
     self.collection = self.db.systemlogs
     if not SystemLogService.__loaded__:
       SystemLogService.__loaded__ = True
@@ -42,6 +44,14 @@ class SystemLogService():
     match_filter = {}
     if type(query_dto.get("user_id")) is bson.ObjectId:
       match_filter["user_id"] = query_dto["user_id"]
+    if type(query_dto.get("email")) is str and query_dto["email"]:
+      pattern = ".*%s.*" % (query_dto["email"], )
+      pattern_regex = re.compile(pattern, re.IGNORECASE)
+      user_ids = list(
+        user["_id"] for user in
+        self.user_collection.find({ "email": pattern_regex }, { "_id": 1 }).limit(200)
+      )
+      match_filter["user_id"] = { "$in": user_ids }
     if type(query_dto.get("target_id")) is bson.ObjectId:
       match_filter["target_id"] = query_dto["target_id"]
     if type(query_dto.get("target_types")) is list and query_dto["target_types"]:
@@ -65,6 +75,8 @@ class SystemLogService():
     # check matched count
     if bool(query_dto.get("count_matched")):
       matched_count = self.collection.count_documents(match_filter)
+
+    lookup_collection(agg_stages, self.user_collection.name, 'user_id', 'user')  
     agg_stages.append({"$skip": page_size * (page_number - 1)})
     agg_stages.append({"$limit": page_size + 1})
     results = list(self.collection.aggregate(agg_stages))
