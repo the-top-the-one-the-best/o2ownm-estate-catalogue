@@ -19,7 +19,10 @@ class UpsertEstateInfoDto(Schema):
   address = fields.String(missing="")
   l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "臺南市" })
   l2_district = fields.String(allow_none=True, missing=None, metadata={ "example": "東區" })
-  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  room_layouts = fields.List(
+    fields.String(validate=validate.OneOf(enum_set(RoomLayouts))),
+    metadata={ "example": list(enum_set(RoomLayouts)) },
+  )
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   estate_tags = fields.List(fields.ObjectId())
   class Meta:
@@ -44,7 +47,10 @@ class UpsertEstateInfoDto(Schema):
 class QueryEstateInfoDto(GenericPagedQueryDto):
   _ids = fields.List(fields.ObjectId)
   name = fields.String()
-  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  room_layouts = fields.List(
+    fields.String(validate=validate.OneOf(enum_set(RoomLayouts))),
+    metadata={ "example": list(enum_set(RoomLayouts)) },
+  )
   # Discrict query example:
   # 臺北市全境 + 新北市三重區 = [
   #   { "l1_district": "新北市",  "l2_district": "三重區" },

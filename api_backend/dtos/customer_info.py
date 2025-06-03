@@ -10,7 +10,10 @@ class FilterCustomerInfoDto(Schema):
   phone = fields.String(metadata={"example": "0987654321"})
   email = fields.String(metadata={"example": "alexchiu@bclab.ai"})
   estate_info_ids = fields.List(fields.ObjectId)
-  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  room_layouts = fields.List(
+    fields.String(validate=validate.OneOf(enum_set(RoomLayouts))),
+    metadata={ "example": list(enum_set(RoomLayouts)) },
+  )
   # Discrict query example:
   # 臺北市全境 + 新北市三重區 = [
   #   { "l1_district": "新北市",  "l2_district": "三重區" },
@@ -38,7 +41,10 @@ class UpsertCustomerInfoDto(Schema):
     validate=lambda value: validate.Email()(value) if value else True,
     metadata={"example": "alexchiu@bclab.ai"}
   )
-  room_layouts = fields.List(fields.String(validate=validate.OneOf(enum_set(RoomLayouts))))
+  room_layouts = fields.List(
+    fields.String(validate=validate.OneOf(enum_set(RoomLayouts))),
+    metadata={ "example": list(enum_set(RoomLayouts)) },
+  )
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   l1_district = fields.String(allow_none=True, missing=None, metadata={ "example": "臺南市" })

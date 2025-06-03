@@ -14,8 +14,14 @@ class QuerySystemLogDto(GenericPagedQueryDto):
   user_id = fields.ObjectId()
   email = fields.String()
   target_id = fields.ObjectId()
-  target_types = fields.List(fields.String(validate=validate.OneOf(enum_set(DataTargets))))
-  event_types = fields.List(fields.String(validate=validate.OneOf(enum_set(AuthEventTypes))))
+  target_types = fields.List(
+    fields.String(validate=validate.OneOf(enum_set(DataTargets))),
+    metadata={ "example": list(enum_set(DataTargets)) }
+  )
+  event_types = fields.List(
+    fields.String(validate=validate.OneOf(enum_set(AuthEventTypes))),
+    metadata={ "example": list(enum_set(AuthEventTypes)) }
+  )
   start_time = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   end_time = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   class Meta:
