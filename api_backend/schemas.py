@@ -311,7 +311,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   )
   room_layouts = fields.List(
     fields.String(validate=validate.OneOf(enum_set(RoomLayouts))),
-    metadata={ "example": [RoomLayouts.layout_2, RoomLayouts.layout_3] },
+    metadata={ "example": list(enum_set(RoomLayouts)) },
   )
   room_sizes = fields.List(fields.Nested(RoomSizeSchema()))
   info_date = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
