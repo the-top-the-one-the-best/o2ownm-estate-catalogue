@@ -76,7 +76,7 @@ class SystemLogService():
     if bool(query_dto.get("count_matched")):
       matched_count = self.collection.count_documents(match_filter)
 
-    agg_stages.append({{"$sort": {"_id": sort_order} }})
+    agg_stages.append({"$sort": {"_id": sort_order} })
     lookup_collection(agg_stages, self.user_collection.name, 'user_id', 'user')
     agg_stages.append({"$skip": page_size * (page_number - 1)})
     agg_stages.append({"$limit": page_size + 1})
