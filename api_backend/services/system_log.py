@@ -40,7 +40,7 @@ class SystemLogService():
       filter['target_id'] = target_id
     return self.collection.count_documents(filter)
 
-  def __query_by_filter__(self, query_dto):
+  def __query_by_filter__(self, query_dto, sort_order=-1):
     match_filter = {}
     if type(query_dto.get("user_id")) is bson.ObjectId:
       match_filter["user_id"] = query_dto["user_id"]
@@ -76,7 +76,8 @@ class SystemLogService():
     if bool(query_dto.get("count_matched")):
       matched_count = self.collection.count_documents(match_filter)
 
-    lookup_collection(agg_stages, self.user_collection.name, 'user_id', 'user')  
+    agg_stages.append({{"$sort": {"_id": sort_order} }})
+    lookup_collection(agg_stages, self.user_collection.name, 'user_id', 'user')
     agg_stages.append({"$skip": page_size * (page_number - 1)})
     agg_stages.append({"$limit": page_size + 1})
     results = list(self.collection.aggregate(agg_stages))
