@@ -34,7 +34,7 @@ class PublicCustomerInfoDto(CustomerInfoSchema):
 
 class UpsertCustomerInfoDto(Schema):
   estate_info_id = fields.ObjectId()
-  name = fields.String(missing="")
+  name = fields.String(missing="", metadata={ "example": "張大帥" })
   title_pronoun = fields.String(missing="")
   phone = fields.String(missing="", metadata={"example": "0987654321"})
   email = fields.String(

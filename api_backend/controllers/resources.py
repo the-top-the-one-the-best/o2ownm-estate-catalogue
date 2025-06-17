@@ -24,3 +24,10 @@ def get_estate_customer_xlsx_import_template():
   file_path = os.path.join("resources", "estate_customer_info_import_template.xlsx")
   print ('####', file_path)
   return flask.send_file(file_path, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@doc(summary="get estate customer blacklist import template", tags=[APITags.resources])
+@blueprint.route("/estate_customer_blacklist_xlsx_import_template", methods=["GET"])
+def get_estate_customer_blacklist_xlsx_import_template():
+  file_path = os.path.join("resources", "customer_blacklist_import_template.xlsx")
+  print ('####', file_path)
+  return flask.send_file(file_path, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

@@ -2,6 +2,7 @@ import multiprocessing
 import pymongo
 import pytz
 from api_backend.schemas import CustomerInfoErrorSchema
+from api_backend.services.customer_blacklist import CustomerBlacklistService
 from api_backend.services.customer_info import CustomerInfoService
 from api_backend.services.estate_info import EstateInfoService
 from api_backend.task_function.workers import process_task
@@ -25,6 +26,7 @@ class BackgroundTaskService():
     self.collection = self.db.bgtasks
     self.estate_service = EstateInfoService()
     self.customer_info_service = CustomerInfoService()
+    self.customer_blacklist_service = CustomerBlacklistService()
     os.makedirs(self.upload_path, exist_ok=True)
     return
   
@@ -196,3 +198,103 @@ class BackgroundTaskService():
       target_extra_info["import_error_previews_limit"] = IMPORT_ERROR_DISPLAY_LIMIT
       target["extra_info"] = target_extra_info
     return target
+
+  def approve_customer_blacklist_import_task_by_id(
+    self,
+    user_id,
+    import_to_draft_task_id,
+    allow_minor_format_errors=False,
+  ):
+    task_entry = {}
+    task_id = bson.ObjectId()
+    task_entry.update(
+      _id = task_id,
+      task_type = constants.TaskTypes.import_customer_blacklist_draft_to_live,
+      state = constants.TaskStates.pending,
+      creator_id = user_id,
+      trial = 0,
+      params = {
+        "processed_task_id": import_to_draft_task_id,
+        "allow_minor_format_errors": allow_minor_format_errors,
+      },
+      result = { },
+      system_pid = 0,
+      created_at = datetime.now(pytz.UTC),
+      run_at = None,
+      finished_at = None,
+    )
+    self.collection.insert_one(task_entry)
+    # process task
+    process = multiprocessing.Process(target=process_task, args=(task_id, ))
+    process.start()
+    return task_entry
+  
+  def reject_customer_blacklist_import_task_by_id(
+    self,
+    user_id,
+    import_to_draft_task_id,
+  ):
+    task_entry = {}
+    task_id = bson.ObjectId()
+    task_entry.update(
+      _id = task_id,
+      task_type = constants.TaskTypes.discard_customer_blacklist_xlsx_import_draft,
+      state = constants.TaskStates.pending,
+      creator_id = user_id,
+      trial = 0,
+      params = { "processed_task_id": import_to_draft_task_id },
+      result = {},
+      system_pid = 0,
+      created_at = datetime.now(pytz.UTC),
+      run_at = None,
+      finished_at = None,
+    )
+    self.collection.insert_one(task_entry)
+    # process task
+    process = multiprocessing.Process(target=process_task, args=(task_id, ))
+    process.start()
+    return task_entry
+  
+  def import_customer_blacklist_to_draft(
+    self,
+    user_id,
+    xlsx_file,
+  ):
+    if xlsx_file.filename == '':
+      raise werkzeug.exceptions.BadRequest('no file found')
+    if xlsx_file.mimetype not in constants.XLSX_MIME_TYPES:
+      raise werkzeug.exceptions.BadRequest(
+        'available mimetypes: %s' % (
+          ', '.join(mimetype for mimetype in constants.XLSX_MIME_TYPES)
+        )
+      )
+    file_dir_final = os.path.join(self.upload_path, str(user_id))
+    task_id = bson.ObjectId()
+    os.makedirs(file_dir_final, exist_ok=True)
+    file_name = '%s' % (str(task_id))
+    file_ext = constants.XLSX_MIME_TYPES[xlsx_file.mimetype]
+    final_file_path = os.path.join(file_dir_final, '%s.%s' % (file_name, file_ext))
+    xlsx_file.save(final_file_path)
+    task_entry = {}
+    task_entry.update(
+      _id = task_id,
+      task_type = constants.TaskTypes.import_customer_blacklist_xlsx_to_draft,
+      state = constants.TaskStates.pending,
+      creator_id = user_id,
+      trial = 0,
+      params = {
+        "original_file_name": xlsx_file.filename,
+        "fs_path": final_file_path,
+      },
+      result = {},
+      system_pid = 0,
+      created_at = datetime.now(pytz.UTC),
+      run_at = None,
+      finished_at = None,
+      extra_info = { "imported_to_live": False },
+    )
+    self.collection.insert_one(task_entry)
+    # process task
+    process = multiprocessing.Process(target=process_task, args=(task_id, ))
+    process.start()
+    return task_entry

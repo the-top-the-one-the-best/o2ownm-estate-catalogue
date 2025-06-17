@@ -134,7 +134,9 @@ class PasswordRequestRequestSchema(MongoDefaultDocumentSchema):
 
 class UserSchema(MongoDefaultDocumentSchema):
   email = fields.Email(allow_none=False, required=True)
-  phone = fields.String(validate=validate.Regexp("^09\d{8}$"))
+  phone = fields.String(
+    
+  )
   password = fields.String()
   name = fields.String()
   description = fields.String()
@@ -304,6 +306,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   phone = fields.String(
     required=True,
     validate=validate.Regexp("^\+?[\d\s\-().]{7,20}$", error="Invalid phone format."),
+    metadata={ "example": "886987654321" },
   )
   email = fields.String(
     validate=lambda value: validate.Email()(value) if value else True,
@@ -334,6 +337,10 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
   def __arrange_data__(self, data):
     if type(data.get("phone")) is str:
       data["phone"] = re.sub(r'\D', '', data["phone"])
+      if len(data["phone"]) == 10 and data["phone"].startswith('09'):
+        data["phone"] = "886%s" % data["phone"][1:]
+      if len(data["phone"]) == 9 and data["phone"][0] == "9":
+        data["phone"] = "886%s" % data["phone"]
     if type(data.get("email")) is str:
       data["email"] = data["email"].strip().lower()
     if type(data.get("room_layouts")) is list:
@@ -363,3 +370,37 @@ class UserRoleSchema(MongoDefaultDocumentSchema):
   updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
   creator_id = fields.ObjectId()
   updater_id = fields.ObjectId()
+
+class CustomerBlacklistSchema(MongoDefaultDocumentSchema):
+  name = fields.String(missing="")
+  phone = fields.String(
+    required=True,
+    validate=validate.Regexp("^\+?[\d\s\-().]{7,20}$", error="Invalid phone format."),
+    metadata={ "example": "886987654321" },
+  )
+  created_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  updated_at = fields.DefaultUTCDateTime(default_timezone=pytz.UTC)
+  creator_id = fields.ObjectId()
+  updater_id = fields.ObjectId()
+  insert_task_id = fields.ObjectId()
+  class MongoMeta:
+    index_list = [
+      { "creator_id": 1, "created_at": -1, "insert_task_id": 1 },
+      { "updater_id": 1, "updated_at": -1, "insert_task_id": 1 },
+    ]
+
+class CustomerBlacklistErrorSchema(MongoDefaultDocumentSchema):
+  insert_task_id = fields.ObjectId()
+  line_number = fields.Integer(metadata={ "example": 2 })
+  field_name = fields.String(metadata={ "example": "phone" })
+  field_header = fields.String(metadata={ "example": "電話" })
+  field_value = fields.String(metadata={ "example": "110" })
+  error_type = fields.String(
+    validate=validate.OneOf(enum_set(ImportErrorTypes)),
+    metadata={ "example": ImportErrorTypes.format_error },
+  )
+  class MongoMeta:
+    index_list = [{ "insert_task_id": 1, "line_number": 1 }]
+
+class CustomerBlacklistDraftSchema(CustomerBlacklistSchema):
+  _dirty = fields.Boolean(missing=False)

@@ -3,6 +3,7 @@ import pymongo
 import os
 import pytz
 import traceback
+from api_backend.task_function.customer_blacklist_import import discard_customer_blacklist_xlsx_import_draft, import_customer_blacklist_draft_to_live, import_customer_blacklist_xlsx_to_draft
 from api_backend.task_function.estate_customer_info_export import export_customer_xlsx
 from api_backend.task_function.estate_customer_info_import import (
   discard_customer_xlsx_import_draft,
@@ -30,7 +31,16 @@ def process_task(task_id, max_retrial=5, collection_name="bgtasks"):
       }
     )
     try:
-      if task["task_type"] == TaskTypes.import_customer_xlsx_to_draft:
+      if task["task_type"] == TaskTypes.import_customer_blacklist_xlsx_to_draft:
+        result = import_customer_blacklist_xlsx_to_draft(task, mongo_client)
+        break
+      elif task["task_type"] == TaskTypes.import_customer_blacklist_draft_to_live:
+        result = import_customer_blacklist_draft_to_live(task, collection_name, mongo_client)
+        break
+      elif task["task_type"] == TaskTypes.discard_customer_blacklist_xlsx_import_draft:
+        result = discard_customer_blacklist_xlsx_import_draft(task, mongo_client)
+        break
+      elif task["task_type"] == TaskTypes.import_customer_xlsx_to_draft:
         result = import_customer_xlsx_to_draft(task, mongo_client)
         break
       elif task["task_type"] == TaskTypes.import_customer_draft_to_live:

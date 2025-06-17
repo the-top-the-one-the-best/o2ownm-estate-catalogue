@@ -23,7 +23,7 @@ bg_service = BackgroundTaskService()
 @blueprint.route('/task_id/<task_id>', methods=['GET'])
 @jwt_required()
 @doc(
-  summary='query upload customer info excel task status',
+  summary='query task status',
   tags=[APITags.file_ops],
   security=[Config.JWT_SECURITY_OPTION],
 )
@@ -120,5 +120,71 @@ def export_customer_info_by_filter(**kwargs):
   new_task = bg_service.export_customer_info_by_filter(
     validate_object_id(user_id),
     query_dto,
+  )
+  return flask.jsonify(SchedulerTaskSchema().dump(new_task))
+
+# blacklist
+@blueprint.route('/customer_blacklist_xlsx/draft', methods=['POST'])
+@check_permission(PermissionTargets.estate_customer_info, Permission.write)
+@doc(
+  summary='upload customer blacklist excel by estate id into draft, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.write,
+  ),
+  tags=[APITags.file_ops],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@use_kwargs(XlsxUploadDto, location="files")
+@marshal_with(SchedulerTaskSchema)
+def upload_and_process_customer_blacklist_xlsx(**kwargs):
+  user_id = get_jwt_identity()
+  if 'xlsx' not in flask.request.files:
+    raise werkzeug.exceptions.BadRequest('no file found')
+  
+  xlsx_file = flask.request.files['xlsx']
+  new_task = bg_service.import_customer_blacklist_to_draft(
+    validate_object_id(user_id),
+    xlsx_file,
+  )
+  return flask.jsonify(SchedulerTaskSchema().dump(new_task))
+
+@blueprint.route('/customer_blacklist_xlsx/approve/<draft_import_task_id>', methods=['POST'])
+@check_permission(PermissionTargets.estate_customer_info, Permission.write)
+@use_kwargs(ApproveDraftImportOptionsDto)
+@doc(
+  summary='approve import task by moving customer blacklist from draft to live collection, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.write,
+  ),
+  tags=[APITags.file_ops],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@marshal_with(SchedulerTaskSchema)
+def approve_customer_blacklist_import_task_by_id(draft_import_task_id, **kwargs):
+  user_id = get_jwt_identity()
+  allow_minor_format_errors = bool(kwargs.get("allow_minor_format_errors"))
+  new_task = bg_service.approve_customer_blacklist_import_task_by_id(
+    validate_object_id(user_id),
+    validate_object_id(draft_import_task_id),
+    allow_minor_format_errors=allow_minor_format_errors,
+  )
+  return flask.jsonify(SchedulerTaskSchema().dump(new_task))
+
+@blueprint.route('/customer_blacklist_xlsx/reject/<draft_import_task_id>', methods=['POST'])
+@check_permission(PermissionTargets.estate_customer_info, Permission.write)
+@doc(
+  summary='reject import task, delete drafts and import errors, permission <%s:%s> required' % (
+    PermissionTargets.estate_customer_info,
+    Permission.write,
+  ),
+  tags=[APITags.file_ops],
+  security=[Config.JWT_SECURITY_OPTION],
+)
+@marshal_with(SchedulerTaskSchema)
+def reject_customer_blacklist_import_task_by_id(draft_import_task_id):
+  user_id = get_jwt_identity()
+  new_task = bg_service.reject_customer_blacklist_import_task_by_id(
+    validate_object_id(user_id),
+    validate_object_id(draft_import_task_id),
   )
   return flask.jsonify(SchedulerTaskSchema().dump(new_task))

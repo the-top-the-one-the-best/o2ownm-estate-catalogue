@@ -11,6 +11,7 @@ XLSX_MIME_TYPES = {
 class APITags:
   admin = "管理 API"
   user_role_mgmt = "角色管理"
+  customer_blacklist = "建案客資管理-客戶黑名單"
   customer_info = "建案客資管理-客戶資料"
   estate_info = "建案客資管理-建案資料"
   customer_tags = "標籤-客戶標籤"
@@ -77,6 +78,9 @@ class TaskTypes:
   import_customer_draft_to_live = "import_customer_draft_to_live"
   discard_customer_xlsx_import_draft = "discard_customer_xlsx_import_draft"
   export_customer_xlsx = "export_customer_xlsx"
+  import_customer_blacklist_xlsx_to_draft = "import_customer_blacklist_xlsx_to_draft"
+  import_customer_blacklist_draft_to_live = "import_customer_blacklist_draft_to_live"
+  discard_customer_blacklist_xlsx_import_draft = "discard_customer_blacklist_xlsx_import_draft"
 
 class TaskStates:
   pending = "pending"
@@ -113,6 +117,16 @@ CUSTOMER_XLSX_EXPORT_FIELD_HEADER_MAP = {
   "name": "姓名",
   "title_pronoun": "頭銜/稱謂",
   "phone": "電話",
+}
+
+CUSTOMER_BLACKLIST_XLSX_HEADER_FIELD_MAP = {
+  "姓名": "name",
+  "電話": "phone",
+}
+
+CUSTOMER_BLACKLIST_XLSX_FIELD_HEADER_MAP = {
+  field: header 
+  for header, field in CUSTOMER_BLACKLIST_XLSX_HEADER_FIELD_MAP.items()
 }
 
 # source: https://www.taiwan.net.tw/m1.aspx?sNo=0001016

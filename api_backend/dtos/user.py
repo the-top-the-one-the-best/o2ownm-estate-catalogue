@@ -14,7 +14,10 @@ except:
 # user
 class CreateUserDto(Schema):
   email = fields.Email(allow_none=False, required=True)
-  phone = fields.String(validate=validate.Regexp("^09\d{8}$"))
+  phone = fields.String(
+    validate=validate.Regexp("^\+?[\d\s\-().]{7,20}$", error="Invalid phone format."),
+    metadata={ "example": "886987654321" },
+  )
   name = fields.String(missing="")
   description = fields.String(missing="")
   permissions = fields.Nested(UserPermissionSchema)
@@ -65,7 +68,10 @@ class ResetPasswordDto(Schema):
 
 class UpdateUserDto(Schema):
   email = fields.Email()
-  phone = fields.String(validate=validate.Regexp("^09\d{8}$"))
+  phone = fields.String(
+    validate=validate.Regexp("^\+?[\d\s\-().]{7,20}$", error="Invalid phone format."),
+    metadata={ "example": "886987654321" },
+  )
   name = fields.String()
   description = fields.String()
   class Meta:

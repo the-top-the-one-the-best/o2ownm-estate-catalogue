@@ -1,18 +1,17 @@
 from datetime import datetime
 import re
-from bson import ObjectId
 import pymongo
 import pytz
 import werkzeug.exceptions
 from api_backend.schemas import (
-  CustomerInfoDraftSchema,
-  CustomerInfoErrorSchema,
-  CustomerInfoSchema,
+  CustomerBlacklistDraftSchema,
+  CustomerBlacklistErrorSchema,
+  CustomerBlacklistSchema,
 )
-from api_backend.utils.mongo_helpers import build_mongo_index, get_district_query
+from api_backend.utils.mongo_helpers import build_mongo_index
 from config import Config
 
-class CustomerInfoService():
+class CustomerBlacklistService():
   __loaded__ = False
   def __init__(
     self,
@@ -20,18 +19,16 @@ class CustomerInfoService():
   ):
     self.mongo_client = mongo_client
     self.db = self.mongo_client.get_database()
-    self.collection = self.db.customerinfos
-    self.draft_collection = self.db.customerinfodrafts
-    self.import_error_collection = self.db.customerinfoimporterrors
-    self.customer_tag_collection = self.db.customertags
-    self.estate_info_collection = self.db.estateinfos
-    if not CustomerInfoService.__loaded__:
-      CustomerInfoService.__loaded__ = True
-      for index in (CustomerInfoSchema.MongoMeta.index_list):
+    self.collection = self.db.customerblacklists
+    self.draft_collection = self.db.customerblacklistdrafts
+    self.import_error_collection = self.db.customerblacklistimporterrors
+    if not CustomerBlacklistService.__loaded__:
+      CustomerBlacklistService.__loaded__ = True
+      for index in (CustomerBlacklistSchema.MongoMeta.index_list):
         build_mongo_index(self.collection, index)
-      for index in CustomerInfoDraftSchema.MongoMeta.index_list:
+      for index in CustomerBlacklistDraftSchema.MongoMeta.index_list:
         build_mongo_index(self.draft_collection, index)
-      for index in (CustomerInfoErrorSchema.MongoMeta.index_list):
+      for index in (CustomerBlacklistErrorSchema.MongoMeta.index_list):
         build_mongo_index(self.import_error_collection, index)
         
   def __build_match_filter__(self, query_dto):
@@ -44,27 +41,6 @@ class CustomerInfoService():
       pattern = ".*%s.*" % (query_dto["phone"], )
       pattern_regex = re.compile(pattern, re.IGNORECASE)
       match_filter["phone"] = pattern_regex
-    if type(query_dto.get("email")) is str and query_dto["email"]:
-      pattern = ".*%s.*" % (query_dto["email"], )
-      pattern_regex = re.compile(pattern, re.IGNORECASE)
-      match_filter["email"] = pattern_regex
-    if type(query_dto.get("estate_info_ids")) is list and query_dto.get("estate_info_ids"):
-      match_filter["estate_info_id"] = { "$in": query_dto["estate_info_ids"] }
-    if type(query_dto.get("room_layouts")) is list and query_dto["room_layouts"]:
-      match_filter["room_layouts"] = { "$all": query_dto["room_layouts"] }
-    if type(query_dto.get("room_size")) is dict and query_dto["room_size"]:
-      size_query = {}
-      if query_dto["room_size"].get("size_max"):
-        size_query["size_max"] = { "$lte": query_dto["room_size"]["size_max"] }
-      if query_dto["room_size"].get("size_min"):
-        size_query["size_min"] = { "$gte": query_dto["room_size"]["size_min"] }
-      match_filter["room_sizes"] = { "$elemMatch": size_query }
-    if type(query_dto.get("districts")) is list and query_dto["districts"]:
-      match_filter["$or"] = [
-        get_district_query(pairs) for pairs in query_dto["districts"]
-      ]
-    if type(query_dto.get("customer_tags")) is list and query_dto["customer_tags"]:
-      match_filter["customer_tags"] = { "$all": query_dto["customer_tags"] }
     return match_filter
 
   def count_by_filter(self, query_dto, grouped_fields=["phone"]):
@@ -161,38 +137,12 @@ class CustomerInfoService():
     dto["updated_at"] = datetime.now(pytz.UTC)
     dto["creator_id"] = user_id
     dto["updater_id"] = user_id
-    if type(dto.get("estate_info_id")) is ObjectId:
-      if not self.estate_info_collection.find_one({ "_id": dto["estate_info_id"]}):
-        raise werkzeug.exceptions.NotFound("estate %s not found" % str(dto["estate_info_id"]))
-    if type(dto.get("customer_tags")) is list and dto["customer_tags"]:
-      found_tags = { 
-        tag["_id"] for tag in self.customer_tag_collection.find(
-          { "_id": { "$in": dto["customer_tags"] }}, { "_id": 1 }
-        )
-      }
-      provided_tags = set(dto["customer_tags"])
-      tags_diff = provided_tags - found_tags
-      if len(tags_diff):
-        raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
     inserted_id = self.collection.insert_one(dto).inserted_id
     return self.find_by_id(inserted_id)
   
   def update_by_id(self, _id, dto, user_id=None):
     dto["updated_at"] = datetime.now(pytz.UTC)
     dto["updater_id"] = user_id
-    if type(dto.get("customer_tags")) is list and dto["customer_tags"]:
-      found_tags = { 
-        tag["_id"] for tag in self.customer_tag_collection.find(
-          { "_id": { "$in": dto["customer_tags"] }}, { "_id": 1 }
-        )
-      }
-      provided_tags = set(dto["customer_tags"])
-      tags_diff = provided_tags - found_tags
-      if len(tags_diff):
-        raise werkzeug.exceptions.NotFound("tags %s not found" % str(tags_diff))
-    if type(dto.get("estate_info_id")) is ObjectId:
-      if not self.estate_info_collection.find_one({ "_id": dto["estate_info_id"]}):
-        raise werkzeug.exceptions.NotFound("estate %s not found" % str(dto["estate_info_id"]))
     self.collection.find_one_and_update({"_id": _id}, {"$set": dto})
     return self.find_by_id(_id)
   
