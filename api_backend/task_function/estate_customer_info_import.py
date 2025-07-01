@@ -131,7 +131,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
         else:
           data[field_name] = value
       elif field_name == "room_sizes" and value and str(value).strip():
-        value = value.replace("坪", "")
+        value = str(value).replace("坪", "")
         size_ranges = []
         data[field_name] = size_ranges
         for size_range in str(value).split(","):
