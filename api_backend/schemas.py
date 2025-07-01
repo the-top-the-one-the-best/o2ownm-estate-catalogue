@@ -332,7 +332,7 @@ class CustomerInfoSchema(MongoDefaultDocumentSchema):
       { "estate_info_id": 1, "l1_district": 1, "l2_district": 1, "room_layouts": 1, "updated_at": -1 },
       { "estate_info_id": 1, "l1_district": 1, "l2_district": 1, "room_sizes.size_min": 1, "updated_at": -1 },
       { "estate_info_id": 1, "l1_district": 1, "l2_district": 1, "customer_tags": 1, "updated_at": -1 },
-      { "estate_info_id": 1, "info_date": -1 },
+      { "estate_info_id": 1, "phone": 1, "info_date": -1 },
       { "insert_task_id": 1 },
     ]
   def __arrange_data__(self, data):
