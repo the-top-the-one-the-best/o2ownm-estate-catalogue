@@ -130,7 +130,7 @@ def import_customer_xlsx_to_draft(task, mongo_client=None):
           data[field_name] = value + timedelta(hours=timezone_offset)
         else:
           data[field_name] = value
-      elif field_name == "room_sizes" and value and value.strip():
+      elif field_name == "room_sizes" and value and str(value).strip():
         value = value.replace("坪", "")
         size_ranges = []
         data[field_name] = size_ranges
