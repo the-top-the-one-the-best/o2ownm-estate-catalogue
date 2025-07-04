@@ -9,6 +9,7 @@ from api_backend.schemas import (
   CustomerInfoErrorSchema,
   CustomerInfoSchema,
 )
+from api_backend.dtos.customer_info import default_customer_info_sort_option
 from api_backend.utils.mongo_helpers import build_mongo_index, get_district_query
 from config import Config
 
@@ -134,8 +135,10 @@ class CustomerInfoService():
   def query_by_filter(self, query_dto):
     # paged_result, has_more, matched_count = self.__query_by_filter__(query_dto)
     match_filter = self.__build_match_filter__(query_dto)
-    page_size = query_dto.get('page_size')
-    page_number = query_dto.get('page_number')
+    page_size = query_dto.get("page_size")
+    page_number = query_dto.get("page_number")
+    sort_options = query_dto.get("sort_options") or default_customer_info_sort_option
+
     agg_stages = []
     matched_count = None
     if match_filter:
@@ -143,6 +146,10 @@ class CustomerInfoService():
     # check matched count
     if bool(query_dto.get("count_matched")):
       matched_count = self.collection.count_documents(match_filter)
+    
+    if sort_options.get("field") and sort_options.get("order"):
+      agg_stages.append({ "$sort": { sort_options.get("field"): sort_options.get("order"), "_id": -1 }})
+    
     agg_stages.append({'$skip': page_size * (page_number-1)})
     agg_stages.append({'$limit': page_size + 1})
     results = list(self.collection.aggregate(agg_stages))

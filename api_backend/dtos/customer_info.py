@@ -25,7 +25,21 @@ class FilterCustomerInfoDto(Schema):
   class Meta:
     unknown = EXCLUDE
 
+class SortCustomerInfoDto(Schema):
+  field = fields.String(
+    validate=validate.OneOf(["info_date", "name", "phone"]),
+    metadata={ "example": "info_date" },
+  )
+  order = fields.Integer(validate=validate.OneOf([-1, 1]), metadata={ "example": -1 },)
+
+default_customer_info_sort_option = { "field": "info_date", "order": -1 }
+
 class QueryCustomerInfoDto(FilterCustomerInfoDto, GenericPagedQueryDto):
+  sort_options = fields.Nested(
+    SortCustomerInfoDto,
+    missing=default_customer_info_sort_option,
+    metadata={ "example": default_customer_info_sort_option },
+  )
   class Meta:
     unknown = EXCLUDE
 
